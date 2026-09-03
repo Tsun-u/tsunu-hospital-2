@@ -1,0 +1,21 @@
+{
+  "name": "小小醫院 2",
+  "short_name": "小小醫院 2",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "theme_color": "#fff2cf",
+  "background_color": "#fffaf0",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

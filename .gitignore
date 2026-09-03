@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+assets/placeholder/
+assets/style/canary_*.png
+write_test.txt

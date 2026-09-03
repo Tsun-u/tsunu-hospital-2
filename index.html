@@ -1,0 +1,1688 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#fff2cf">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <title>小小醫院 2</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+  <script src="assets/unlock_burst.js"></script>
+  <style>
+    :root {
+      --ink: #5a493f;
+      --cream: #fffaf0;
+      --yellow: #ffd66d;
+      --orange: #f3a45d;
+      --green: #8dcbb1;
+      --mint: #e7f5e9;
+      --pink: #f4a8af;
+      --blue: #9fd7e3;
+      --line: #8a6c57;
+      --shadow: 0 5px 0 rgba(111, 79, 56, .18);
+    }
+    /* Tsunu Round＝jf open 粉圓 2.1 的 subset（改名依 OFL Reserved Font Name 規定），
+       覆蓋 strings.js 全部台文漢字與台羅調號，授權見 fonts/LICENSE-OFL.txt */
+    @font-face {
+      font-family: "Tsunu Round";
+      src: url("fonts/tsunu-round.woff2") format("woff2");
+      font-display: swap;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      color: var(--ink);
+      background: radial-gradient(circle at 50% 15%, #d9f3ea 0, #b9eadc 72%);
+      font-family: "Tsunu Round", "Microsoft JhengHei", "PingFang TC", sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      overscroll-behavior: none;
+    }
+    button, a { font: inherit; -webkit-tap-highlight-color: transparent; }
+    button { color: inherit; }
+    .lo { display: block; font-size: max(12px, .62em); line-height: 1.05; font-weight: 700; }
+    #scaler {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 1180px;
+      height: 760px;
+      transform-origin: center;
+      border: 5px solid #fff;
+      border-radius: 30px;
+      overflow: hidden;
+      background: linear-gradient(#fffaf0 0 70px, #f5ead4 70px 100%);
+      box-shadow: 0 18px 60px rgba(93, 62, 39, .24);
+    }
+    .topbar {
+      height: 70px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-bottom: 4px solid #5faa90;
+      background: var(--green);
+    }
+    .brand { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
+    .brand-cross {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: #fff;
+      color: #e05a5a;
+      font-size: 32px;
+      font-weight: 950;
+      line-height: 1;
+      box-shadow: 0 3px 0 rgba(63, 110, 92, .35);
+    }
+    .brand h1 { margin: 0; font-size: 25px; font-weight: 950; color: #2f5c4c; line-height: 1.05; }
+    .brand h1 .lo { color: #3f7a66; }
+    .status-pill, .top-btn {
+      height: 50px;
+      min-width: 64px;
+      border: 3px solid var(--line);
+      border-radius: 17px;
+      background: #fff;
+      box-shadow: 0 3px 0 rgba(107, 76, 54, .22);
+      font-weight: 900;
+    }
+    .status-pill { display: flex; align-items: center; gap: 8px; padding: 5px 13px; font-size: 21px; }
+    .status-pill img, .top-btn img, .top-btn .octocat { width: 32px; height: 32px; object-fit: contain; }
+    .top-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 5px 11px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .top-btn:active { transform: translateY(3px); box-shadow: none; }
+    #githubBtn { margin-left: auto; background: #f3efe9; }
+    #langBtn { min-width: 96px; }
+    #langBtn small { font-size: 15px; }
+    #game {
+      height: 680px;
+      padding: 10px 14px 12px;
+      display: grid;
+      grid-template-rows: 290px 368px;
+      gap: 10px;
+    }
+    .upper-row { display: grid; grid-template-columns: 170px 158px 158px 1fr; gap: 10px; min-width: 0; }
+    .station, .room {
+      position: relative;
+      overflow: hidden;
+      border: 4px solid var(--line);
+      border-radius: 22px;
+      background: var(--cream);
+      box-shadow: var(--shadow);
+    }
+    .station.drop-ready, .room.drop-ready, .pharmacy-window.drop-ready { animation: targetGlow .65s ease-in-out infinite alternate; }
+    .station.active, .room.active, .pharmacy-window.active { border-color: #e99b35; box-shadow: 0 0 0 6px rgba(255, 209, 91, .5), var(--shadow); }
+    @keyframes targetGlow { to { border-color: #f2a34c; box-shadow: 0 0 0 6px rgba(255, 211, 91, .46); } }
+    .scene-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .45; pointer-events: none; }
+    .station-label {
+      position: absolute;
+      left: 8px;
+      top: 7px;
+      z-index: 8;
+      min-height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border: 2px solid rgba(113, 82, 60, .55);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, .92);
+      font-weight: 950;
+      font-size: 18px;
+      line-height: 1;
+      margin: 0;
+    }
+    .station-label img { width: 29px; height: 29px; object-fit: contain; }
+    .npc {
+      position: absolute;
+      z-index: 2;
+      right: 5px;
+      bottom: 18px;
+      width: 155px;
+      height: 190px;
+      object-fit: contain;
+      object-position: bottom;
+      filter: saturate(.82) brightness(.94);
+      transform-origin: 50% 85%;
+      transition: transform .12s ease-out;
+      pointer-events: none;
+    }
+    .station.active .npc, .room.active .npc { filter: saturate(1.08) brightness(1.05); }
+    .npc.wave { transform: scale(1.1); }
+    .npc.shrug { animation: npcShrug .48s ease-in-out 2; }
+    .npc.shake { animation: npcShake .42s ease-in-out 2; }
+    @keyframes npcShrug { 40% { transform: translateY(-8px) scaleX(1.08); } 70% { transform: translateY(2px) scaleX(.95); } }
+    @keyframes npcShake { 25% { transform: translateX(-7px) rotate(-3deg); } 70% { transform: translateX(7px) rotate(3deg); } }
+    .npc-cue {
+      position: absolute;
+      z-index: 10;
+      right: 78px;
+      top: 44px;
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border: 3px solid var(--line);
+      border-radius: 50%;
+      background: white;
+      opacity: 0;
+      transform: scale(.35);
+      pointer-events: none;
+    }
+    .npc-cue img { width: 42px; height: 42px; object-fit: contain; }
+    .npc-cue.show { animation: cuePop 1.05s ease-out; }
+    @keyframes cuePop { 18%, 72% { opacity: 1; transform: scale(1.08); } 100% { opacity: 0; transform: scale(.55); } }
+    #waitingStation .npc { display: none; }
+    .entrance { position: absolute; left: 9px; top: 52px; font-size: 40px; opacity: .75; }
+    .rooms-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; }
+    .room { border-radius: 18px; }
+    .room.locked .scene-art, .room.locked .npc, .room.locked .station-label img,
+    .pharmacy-window.locked .npc {
+      filter: brightness(0);
+      opacity: .16;
+    }
+    .room.locked .scene-art { filter: grayscale(1); opacity: .18; }
+    .room.locked, .pharmacy-window.locked { border-color: #c9b89f; background: #f1e9da; }
+    .room.locked::after, .pharmacy-window.locked::after {
+      content: "🔒";
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      z-index: 9;
+      font-size: 24px;
+      opacity: .75;
+    }
+    .room .station-label { right: 5px; left: 5px; justify-content: center; padding: 2px 5px; font-size: 14px; text-align: center; }
+    .room .station-label .lo { letter-spacing: -.02em; }
+    .room .station-label img { width: 27px; height: 27px; }
+    .room .npc { left: auto; right: 0; bottom: 8px; width: 102px; height: 102px; }
+    .room .npc-cue { right: 62px; top: 43px; width: 51px; height: 51px; }
+    .room .npc-cue img { width: 36px; height: 36px; }
+    .patient {
+      position: absolute;
+      z-index: 6;
+      left: 8px;
+      bottom: 9px;
+      width: 158px;
+      height: 158px;
+      touch-action: none;
+      cursor: grab;
+      transform-origin: 50% 90%;
+      animation: patientArrive .42s cubic-bezier(.2, .9, .3, 1.18);
+    }
+    .station .npc { left: auto; right: 0; bottom: 6px; width: 96px; height: 96px; }
+    .station .patient { left: 0; bottom: 6px; width: calc(96px * var(--stature)); height: calc(96px * var(--stature)); }
+    #waitingStation .patient {
+      left: 50%;
+      top: auto;
+      bottom: var(--waiting-bottom, 8px);
+      width: calc(100px * var(--stature));
+      height: calc(100px * var(--stature));
+      transform: translateX(-50%);
+    }
+    .room .patient { left: 0; bottom: 6px; width: calc(102px * var(--stature)); height: calc(102px * var(--stature)); }
+    /* 身高：大人與 NPC 同高，小孩、幼兒、動物依序矮下去 */
+    .patient { --stature: 1; }
+    .patient[data-age="teen"] { --stature: .94; }
+    .patient[data-age="kid"] { --stature: .76; }
+    .patient[data-character^="toddler"] { --stature: .64; }
+    .patient[data-age="animal"] { --stature: .66; }
+    .patient[data-age="robot"] { --stature: .84; }
+    .patient.dragging-source { opacity: .25; }
+    .patient-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center bottom;
+      transform: scale(var(--expression-scale, 1));
+      transform-origin: center bottom;
+      transition: transform .18s ease-out;
+      pointer-events: none;
+    }
+    .patient.crying[data-character="dog"] { --expression-scale: .78; }
+    .patient.crying[data-character="cat"] { --expression-scale: .88; }
+    .patient.crying[data-character="rabbit"] { --expression-scale: .8; }
+    .patient.crying[data-character="giraffe"] { --expression-scale: .92; }
+    .patient.crying[data-character="raccoon"] { --expression-scale: .86; }
+    .patient.crying[data-character="rhino"] { --expression-scale: .84; }
+    @keyframes patientArrive { from { transform: translateX(-22px) scale(.8); opacity: .25; } }
+    .patient.checking { animation: checking  .3s ease-in-out infinite alternate; }
+    @keyframes checking { to { transform: rotate(3deg) scale(1.035); } }
+    .patient.treating { animation: treating .38s ease-in-out infinite alternate; }
+    @keyframes treating { to { transform: translateY(-4px) scale(1.06); } }
+    .patient.questioning { animation: questionTilt .22s ease-in-out 4 alternate; }
+    @keyframes questionTilt { to { transform: rotate(8deg); } }
+    .patient.crying { animation: none; }
+    .patient.patting { animation: patientPat .3s ease-in-out 3; }
+    @keyframes patientPat { 50% { transform: scale(.94) rotate(-3deg); } }
+    .patient.happy { animation: happyHop .55s ease-in-out 3; }
+    @keyframes happyHop { 45% { transform: translateY(-17px) rotate(5deg); } }
+    .patient.going-home { animation: goHome .8s ease-in forwards; }
+    @keyframes goHome { to { transform: translateX(-320px) scale(.7); opacity: 0; } }
+    .symptom-bubble {
+      position: absolute;
+      z-index: 9;
+      left: 2px;
+      top: auto;
+      bottom: calc(100% - 6px);
+      width: 62px;
+      height: 62px;
+      display: grid;
+      place-items: center;
+      border: 3px solid var(--line);
+      border-radius: 50%;
+      background: white;
+      animation: bubblePop .55s cubic-bezier(.2, 1.5, .4, 1);
+    }
+    .symptom-bubble img { width: 47px; height: 47px; object-fit: contain; }
+    .symptom-bubble.prescription { bottom: calc(100% + 4px); }
+    .symptom-bubble.prescription {
+      width: auto;
+      min-width: 62px;
+      padding: 0 7px;
+      display: flex;
+      gap: 2px;
+      border-radius: 24px;
+    }
+    .prescription-med { position: relative; width: 30px; height: 30px; display: grid; place-items: center; }
+    .symptom-bubble.prescription .prescription-med img { width: 30px; height: 30px; }
+    .prescription-med.done img { opacity: .35; }
+    .prescription-med.done::after {
+      content: "✓";
+      position: absolute;
+      right: -1px;
+      bottom: -2px;
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #79b96b;
+      color: white;
+      font: 950 15px/1 sans-serif;
+    }
+    @keyframes bubblePop { from { transform: scale(.15); opacity: 0; } }
+    .question-mark {
+      position: absolute;
+      z-index: 11;
+      left: 7px;
+      top: 7px;
+      font-size: 50px;
+      font-weight: 1000;
+      color: #e07169;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .question-mark.show { animation: questionPop .9s ease-out; }
+    @keyframes questionPop { 20%, 72% { opacity: 1; transform: translateY(-13px) scale(1.1); } 100% { opacity: 0; transform: translateY(-22px) scale(.55); } }
+    .tears { position: absolute; z-index: 12; left: 29px; top: 48px; width: 49px; height: 48px; pointer-events: none; }
+    .tears i {
+      position: absolute;
+      top: 0;
+      width: 10px;
+      height: 17px;
+      border-radius: 50% 50% 58% 58%;
+      background: #71c9e9;
+      box-shadow: 0 1px 0 #4b9ec1;
+      animation: tearDrop .7s ease-in infinite;
+    }
+    .tears i:first-child { left: 2px; }
+    .tears i:last-child { right: 2px; animation-delay: .28s; }
+    @keyframes tearDrop { from { transform: translateY(-4px) scale(.7); opacity: 1; } to { transform: translateY(29px) scale(1.05); opacity: 0; } }
+    .action-tool {
+      position: absolute;
+      z-index: 14;
+      left: 50%;
+      margin-left: -34px;
+      top: auto;
+      bottom: calc(100% - 2px);
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      pointer-events: none;
+      animation: actionTool .48s ease-in-out infinite alternate;
+    }
+    @keyframes actionTool { to { transform: rotate(12deg) scale(1.09); } }
+    #stampBtn {
+      position: absolute;
+      z-index: 20;
+      left: auto;
+      right: 8px;
+      top: 50px;
+      width: 64px;
+      height: 64px;
+      display: none;
+      place-items: center;
+      border: 4px solid #9c584d;
+      border-radius: 50%;
+      background: #fff0d5;
+      box-shadow: 0 5px 0 #c88c70;
+      cursor: pointer;
+    }
+    #stampBtn.show { display: grid; animation: stampReady .55s ease-in-out infinite alternate; }
+    #stampBtn img { width: 48px; height: 48px; object-fit: contain; }
+    #stampBtn:active { transform: translateY(4px); box-shadow: 0 1px 0 #c88c70; }
+    @keyframes stampReady { to { transform: scale(1.06); filter: brightness(1.08); } }
+    .stamp-mark {
+      position: absolute;
+      z-index: 21;
+      left: 46px;
+      top: 77px;
+      width: 66px;
+      height: 66px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .stamp-mark.show { animation: stampDown .75s ease-out; }
+    @keyframes stampDown { 0% { opacity: 0; transform: translateY(-55px) scale(1.4) rotate(-16deg); } 38%, 78% { opacity: 1; transform: translateY(0) scale(.88) rotate(-6deg); } 100% { opacity: 0; transform: scale(1.1) rotate(-6deg); } }
+    .station-tools {
+      position: absolute;
+      right: 6px;
+      top: 50px;
+      z-index: 12;
+      width: 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .station-tools:empty { display: none; }
+    .tool {
+      width: 56px;
+      height: 56px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border: 3px solid #89654e;
+      border-radius: 14px;
+      background: #fffdf7;
+      box-shadow: 0 4px 0 #c49a73;
+      cursor: pointer;
+    }
+    .tool img { width: 40px; height: 40px; object-fit: contain; }
+    .tool:active { transform: translateY(3px); box-shadow: none; }
+    .tool[disabled] { opacity: .45; cursor: default; }
+    .room .station-tools { width: 52px; }
+    .room .tool { width: 52px; height: 52px; }
+    .room .tool img { width: 38px; height: 38px; }
+    #checkStation .station-tools { width: 134px; display: grid; grid-template-columns: repeat(3, 42px); grid-auto-rows: 42px; gap: 4px; }
+    #checkStation .tool { width: 42px; height: 42px; border-width: 2px; }
+    #checkStation .tool img { width: 32px; height: 32px; }
+    .pharmacy-window .station-tools { top: 6px; width: 80px; display: grid; grid-template-columns: repeat(2, 38px); grid-auto-rows: 38px; gap: 4px; }
+    .pharmacy-window .tool { width: 38px; height: 38px; border-width: 2px; border-radius: 11px; }
+    .pharmacy-window .tool img { width: 28px; height: 28px; }
+    .drag-ghost {
+      position: fixed !important;
+      z-index: 1000 !important;
+      margin: 0 !important;
+      pointer-events: none !important;
+      opacity: .95;
+      transform: translate(-50%, -50%) scale(1.08);
+      transform-origin: center;
+      animation: none !important;
+    }
+    .drag-ghost.bouncing { transition: left .42s cubic-bezier(.3, -.2, .75, .2), top .42s cubic-bezier(.3, -.2, .75, .2), transform .42s ease, opacity .42s ease; transform: translate(-50%, -50%) scale(.55) rotate(-15deg); opacity: .45; }
+    #heartFly {
+      position: fixed;
+      z-index: 1200;
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      pointer-events: none;
+      opacity: 0;
+    }
+    #heartFly.fly { animation: heartFly .9s ease-in forwards; }
+    @keyframes heartFly { 0% { opacity: 1; transform: scale(.5) rotate(-12deg); } 45% { opacity: 1; transform: scale(1.3) rotate(12deg); } 100% { left: var(--heart-x); top: var(--heart-y); opacity: .2; transform: scale(.45) rotate(28deg); } }
+    #status {
+      position: absolute;
+      z-index: 200;
+      left: 50%;
+      top: 77px;
+      min-width: 64px;
+      min-height: 44px;
+      padding: 6px 17px;
+      display: grid;
+      place-items: center;
+      border: 3px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .96);
+      font-size: 18px;
+      font-weight: 950;
+      opacity: 0;
+      transform: translate(-50%, -15px) scale(.8);
+      pointer-events: none;
+    }
+    #status.show { animation: statusPop 1.25s ease-out; }
+    @keyframes statusPop { 18%, 76% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -8px) scale(.92); } }
+    .pharmacy-windows { position: absolute; z-index: 3; inset: 48px 5px 5px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+    .pharmacy-window { position: relative; min-width: 64px; border: 2px dashed rgba(90,73,63,.45); border-radius: 14px; overflow: visible; }
+    .pharmacy-window .npc { left: auto; right: 92px; bottom: 6px; width: 110px; height: 110px; }
+    .pharmacy-window .patient { left: 2px; bottom: 6px; width: calc(110px * var(--stature)); height: calc(110px * var(--stature)); }
+    .pharmacy-window .npc-cue { right: 45px; top: 8px; width: 48px; height: 48px; }
+    .window-number { position: absolute; z-index: 12; left: 5px; top: 5px; width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.9); font-weight: 950; }
+    .overlay {
+      position: absolute;
+      z-index: 1500;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(79, 59, 45, .58);
+    }
+    .overlay[hidden] { display: none; }
+    .gallery-overlay { z-index: 2000; background: rgba(75, 54, 42, .72); }
+    .gallery-panel {
+      width: 1120px;
+      height: 700px;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 18px 18px;
+      border: 5px solid var(--line);
+      border-radius: 28px;
+      background: #fff8e9;
+      box-shadow: 0 16px 0 rgba(82,57,40,.24);
+      animation: galleryOpen .32s cubic-bezier(.175,.885,.32,1.15);
+    }
+    @keyframes galleryOpen { from { opacity: 0; transform: translateY(18px) scale(.94); } }
+    .gallery-head { min-height: 64px; display: flex; align-items: center; gap: 10px; }
+    .gallery-head img { width: 42px; height: 42px; object-fit: contain; }
+    .gallery-head h2 { margin: 0; font-size: 29px; line-height: 1; }
+    .gallery-close {
+      width: 64px;
+      height: 64px;
+      margin-left: auto;
+      border: 4px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 4px 0 #c9a37c;
+      font-size: 39px;
+      font-weight: 950;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .gallery-close:active { transform: translateY(3px); box-shadow: 0 1px 0 #c9a37c; }
+    .gallery-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 7px; }
+    .gallery-card {
+      position: relative;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 5px 4px 7px;
+      overflow: hidden;
+      border: 3px solid #dec49e;
+      border-radius: 15px;
+      background: #fff;
+      text-align: center;
+    }
+    .gallery-card-art { width: 82px; height: 120px; object-fit: contain; flex: none; }
+    .gallery-card.unmet .gallery-card-art { filter: brightness(0); opacity: .4; }
+    .gallery-card-name { min-height: 30px; display: grid; place-items: center; font-size: 13px; font-weight: 950; line-height: 1.08; }
+    .gallery-card-name .lo { font-size: 12px; }
+    .gallery-card-count { min-height: 15px; font-size: 11px; font-weight: 850; color: #a04e5d; line-height: 1.1; }
+    .gallery-card.egg-mystery { justify-content: center; background: #8a65a8; border-color: #654080; color: #fff; }
+    .gallery-card.egg-mystery .gallery-question { font-size: 72px; font-weight: 950; line-height: 1; text-shadow: 0 5px 0 rgba(53,24,72,.25); }
+    .gallery-card.egg-mystery .gallery-card-name { min-height: 24px; font-size: 12px; color: #f8eaff; }
+    .summary-card {
+      width: 520px;
+      padding: 30px 38px;
+      border: 5px solid var(--line);
+      border-radius: 30px;
+      background: #fffaf0;
+      box-shadow: 0 16px 0 rgba(82,57,40,.22);
+      text-align: center;
+    }
+    .summary-card h2 { margin: 0 0 20px; font-size: 38px; }
+    .summary-lines { display: grid; gap: 10px; margin: 0 auto 22px; font-size: 24px; font-weight: 900; text-align: left; }
+    .summary-heart { display: flex; align-items: center; justify-content: center; gap: 9px; margin-bottom: 22px; font-size: 29px; font-weight: 950; }
+    .summary-heart img { width: 42px; height: 42px; object-fit: contain; }
+    .primary-btn, .rest-gallery-btn {
+      min-width: 150px;
+      min-height: 64px;
+      padding: 8px 22px;
+      border: 4px solid var(--line);
+      border-radius: 22px;
+      background: var(--yellow);
+      box-shadow: 0 5px 0 #b88752;
+      font-size: 23px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+    .primary-btn:active, .rest-gallery-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #b88752; }
+    .rest-overlay { background: #725b4b; overflow: hidden; }
+    .rest-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .72; }
+    .rest-panel { position: relative; z-index: 2; width: 570px; min-height: 410px; padding: 30px; border: 5px solid var(--line); border-radius: 30px; background: rgba(255,250,240,.94); text-align: center; }
+    .rest-panel h2 { margin: 0 0 6px; font-size: 38px; }
+    .rest-hint { margin: 0 0 14px; font-size: 21px; font-weight: 800; }
+    .countdown { font: 950 49px/1.1 ui-monospace, monospace; letter-spacing: 3px; }
+    .rest-door { width: 94px; height: 105px; display: grid; place-items: center; margin: 9px auto; border: 5px solid #795c48; border-radius: 45px 45px 12px 12px; background: #8f7765; font-size: 48px; transition: filter .3s, box-shadow .3s, transform .3s; }
+    .rest-door.lit { filter: brightness(1.25); box-shadow: 0 0 28px 12px #ffe47c; transform: scale(1.06); }
+    .rest-actions { display: flex; justify-content: center; gap: 14px; }
+    .rest-gallery-btn { background: #d9efe5; }
+    #openHospitalBtn[hidden] { display: none; }
+    .unlock-show { position: absolute; z-index: 1700; inset: 0; display: grid; place-items: center; pointer-events: none; }
+    .unlock-show[hidden] { display: none; }
+    .unlock-visitor { position: absolute; left: 0; top: 140px; width: 220px; height: 300px; transform: translateX(-230px); animation: visitorPeek 2.1s ease-in-out; }
+    .unlock-visitor img { width: 100%; height: 100%; object-fit: contain; transform-origin: 50% 88%; animation: visitorWave .35s ease-in-out 5 alternate; }
+    @keyframes visitorPeek { 18%,78% { transform: translateX(20px); } }
+    @keyframes visitorWave { to { transform: rotate(7deg) scale(1.04); } }
+    .unlock-effects { position: absolute; left: 190px; top: 300px; width: 310px; height: 310px; transform: translate(-50%,-50%); }
+    #unlockBurst { position: absolute; inset: 0; }
+    .fallback-stars { position: absolute; inset: 0; display: none; }
+    .fallback-stars.show { display: block; }
+    .fallback-stars i { position: absolute; left: 50%; top: 50%; color: #ffd84e; font-size: 43px; animation: starBurst .9s ease-out forwards; transform: rotate(var(--angle)) translateX(0); }
+    @keyframes starBurst { to { transform: rotate(var(--angle)) translateX(125px) rotate(120deg) scale(.45); opacity: 0; } }
+    .unlock-message { padding: 15px 28px; border: 4px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.96); box-shadow: var(--shadow); font-size: 30px; font-weight: 950; animation: unlockMessage 2.1s ease-in-out; }
+    @keyframes unlockMessage { 0%,100% { opacity: 0; transform: scale(.7); } 20%,82% { opacity: 1; transform: scale(1); } }
+    @media (max-aspect-ratio: 4/3) {
+      body::after {
+        content: "↔";
+        position: fixed;
+        right: 10px;
+        bottom: 8px;
+        color: rgba(90, 73, 63, .35);
+        font: 900 24px/1 sans-serif;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="scaler">
+    <header class="topbar">
+      <div class="brand"><span class="brand-cross" aria-hidden="true">+</span><h1 id="brandTitle"></h1></div>
+      <div id="heartBox" class="status-pill"><img id="heartIcon" alt=""><span id="heartCount">0</span></div>
+      <div id="dayBox" class="status-pill"><img id="calendarIcon" alt=""><span id="dayText"></span></div>
+      <button id="galleryBtn" class="top-btn" type="button"><img id="bookIcon" alt=""><span id="galleryText"></span></button>
+      <button id="langBtn" class="top-btn" type="button"><span id="languageMark"></span><small></small></button>
+      <button id="soundBtn" class="top-btn" type="button"><img id="soundIcon" alt=""></button>
+      <a id="githubBtn" class="top-btn" href="https://github.com/Tsun-u/tsunu-hospital-2" target="_blank" rel="noopener noreferrer"><svg class="octocat" viewBox="0 0 16 16" width="32" height="32" aria-hidden="true"><path fill="#5f4d44" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
+    </header>
+
+    <section id="game" aria-label="小小醫院 2">
+      <div class="upper-row">
+        <section id="waitingStation" class="station drop-zone" data-station="waiting">
+          <img class="scene-art" alt="" draggable="false">
+          <h2 class="station-label" data-label="waiting"></h2>
+          <span class="entrance" aria-hidden="true">🚪</span>
+        </section>
+
+        <section id="receptionStation" class="station drop-zone" data-station="reception" data-npc="reception">
+          <img class="scene-art" alt="" draggable="false">
+          <h2 class="station-label" data-label="reception"><img alt=""></h2>
+          <img class="npc" alt="" draggable="false">
+          <div class="npc-cue"><img alt=""></div>
+          <button id="stampBtn" type="button"><img alt=""></button>
+          <img id="stampMark" class="stamp-mark" alt="">
+        </section>
+
+        <section id="checkStation" class="station drop-zone" data-station="check" data-npc="nurse">
+          <img class="scene-art" alt="" draggable="false">
+          <h2 class="station-label" data-label="checkStation"><img alt=""></h2>
+          <img class="npc" alt="" draggable="false">
+          <div class="npc-cue"><img alt=""></div>
+          <div class="station-tools" aria-label=""></div>
+        </section>
+
+        <section id="pharmacyStation" class="station">
+          <img class="scene-art" alt="" draggable="false">
+          <h2 class="station-label" data-label="pharmacy"><img alt=""></h2>
+          <div class="pharmacy-windows">
+            <section id="pharmacyWindow1" class="pharmacy-window drop-zone" data-station="pharmacy1" data-npc="pharmacist">
+              <span class="window-number">1</span><img class="npc" alt="" draggable="false"><div class="npc-cue"><img alt=""></div><div class="station-tools" aria-label=""></div>
+            </section>
+            <section id="pharmacyWindow2" class="pharmacy-window drop-zone locked" data-station="pharmacy2" data-npc="pharmacist">
+              <span class="window-number">2</span><img class="npc" alt="" draggable="false"><div class="npc-cue"><img alt=""></div><div class="station-tools" aria-label=""></div>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <div id="rooms" class="rooms-row"></div>
+
+    </section>
+    <div id="status" role="status" aria-live="polite"></div>
+    <section id="summaryOverlay" class="overlay" hidden>
+      <div class="summary-card">
+        <h2 id="summaryTitle"></h2>
+        <div class="summary-lines"><div id="summaryHuman"></div><div id="summaryAnimal"></div><div id="summaryRobot"></div></div>
+        <div class="summary-heart"><img alt=""><span id="summaryHearts"></span></div>
+        <button id="nextDayBtn" class="primary-btn" type="button"></button>
+      </div>
+    </section>
+    <section id="restOverlay" class="overlay rest-overlay" hidden>
+      <img class="rest-bg" alt="" draggable="false">
+      <div class="rest-panel">
+        <h2 id="restTitle"></h2>
+        <p id="restHint" class="rest-hint"></p>
+        <div id="restCountdown" class="countdown">05:00</div>
+        <div id="restDoor" class="rest-door" aria-hidden="true">🚪</div>
+        <div class="rest-actions">
+          <button id="restGalleryBtn" class="rest-gallery-btn" type="button"></button>
+          <button id="openHospitalBtn" class="primary-btn" type="button" hidden></button>
+        </div>
+      </div>
+    </section>
+    <section id="galleryOverlay" class="overlay gallery-overlay" role="dialog" aria-modal="true" aria-labelledby="galleryTitle" hidden>
+      <div class="gallery-panel">
+        <header class="gallery-head">
+          <img id="galleryIcon" alt="" draggable="false">
+          <h2 id="galleryTitle"></h2>
+          <button id="galleryCloseBtn" class="gallery-close" type="button">×</button>
+        </header>
+        <div id="galleryGrid" class="gallery-grid"></div>
+      </div>
+    </section>
+    <section id="unlockShow" class="unlock-show" hidden>
+      <div id="unlockVisitor" class="unlock-visitor"><img alt="" draggable="false"></div>
+      <div class="unlock-effects"><div id="unlockBurst"></div><span id="fallbackStars" class="fallback-stars"></span></div>
+      <div id="unlockMessage" class="unlock-message"></div>
+    </section>
+  </main>
+  <img id="heartFly" alt="">
+
+  <script src="data.js"></script>
+  <script src="strings.js"></script>
+  <script>
+    'use strict';
+
+    const ASSET_ROOT = 'assets/';
+    const ASSET_EXT = '.webp';
+    const $ = id => document.getElementById(id);
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const patientPath = (id, expression) => `${ASSET_ROOT}patients/${id}_${expression}${ASSET_EXT}`;
+    const npcPath = (id, pose) => `${ASSET_ROOT}npc/${id}_${pose}${ASSET_EXT}`;
+    const scenePath = id => `${ASSET_ROOT}scenes/${id}${ASSET_EXT}`;
+    const iconPath = (group, id) => `${ASSET_ROOT}icons/${group}/${id}${ASSET_EXT}`;
+    const SAVE_KEY = 'hospital2Save';
+
+    const state = {
+      hearts: 0,
+      day: 1,
+      lang: 'zh',
+      sound: true,
+      met: {},
+      lastCloseAt: 0,
+      dayDone: false,
+      patients: [],
+      nextPatientId: 1,
+      spawned: 0,
+      treated: { human: 0, animal: 0, robot: 0 },
+      summaryShown: false,
+      hospitalOpen: false,
+    };
+    let activeDrag = null;
+    let audioContext = null;
+    let spawnTimer = 0;
+    let restTimer = 0;
+    let unlockBurstAnim = null;
+    let unlockBurstReady = false;
+
+    function loadSave() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+        if (!parsed || typeof parsed !== 'object') return false;
+        state.day = Math.max(1, Math.floor(Number(parsed.day) || 1));
+        state.hearts = Math.max(0, Math.floor(Number(parsed.hearts) || 0));
+        state.met = parsed.met && typeof parsed.met === 'object' && !Array.isArray(parsed.met) ? parsed.met : {};
+        state.lang = parsed.lang === 'tw' ? 'tw' : 'zh';
+        state.sound = typeof parsed.sound === 'boolean' ? parsed.sound : true;
+        state.lastCloseAt = Math.max(0, Number(parsed.lastCloseAt) || 0);
+        state.dayDone = Boolean(parsed.dayDone);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+    function saveProgress() {
+      const payload = {
+        day: state.day,
+        hearts: state.hearts,
+        met: state.met,
+        lang: state.lang,
+        sound: state.sound,
+        lastCloseAt: state.lastCloseAt,
+        dayDone: state.dayDone,
+      };
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(payload)); } catch (error) {}
+    }
+
+    function text(key, vars = {}) {
+      const source = STRINGS[key] || { zh: key, tw: '', lo: '' };
+      const fill = value => (value || '').replace(/\{(\w+)\}/g, (_, name) => vars[name] === undefined ? `{${name}}` : vars[name]);
+      if (state.lang === 'zh') return fill(source.zh);
+      if (state.lang === 'lo') return fill((source.lo && source.lo.trim()) ? source.lo : ((source.tw && source.tw.trim()) ? source.tw : source.zh));
+      const main = fill((source.tw && source.tw.trim()) ? source.tw : source.zh);
+      return main + ((source.lo && source.lo.trim()) ? `<span class="lo">${fill(source.lo)}</span>` : '');
+    }
+    function textPlain(key, vars = {}) {
+      return text(key, vars).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function ensureAudio() {
+      if (!state.sound) return null;
+      if (!audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        try { if (AudioCtx) audioContext = new AudioCtx(); } catch (error) { audioContext = null; }
+      }
+      if (audioContext && audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+      return audioContext;
+    }
+    function tone(frequency, duration = .1, type = 'sine', gain = .045, delay = 0) {
+      const ctx = audioContext;
+      if (!state.sound || !ctx) return;
+      const oscillator = ctx.createOscillator();
+      const volume = ctx.createGain();
+      const start = ctx.currentTime + delay;
+      oscillator.type = type;
+      oscillator.frequency.value = frequency;
+      volume.gain.setValueAtTime(gain, start);
+      volume.gain.exponentialRampToValueAtTime(.001, start + duration);
+      oscillator.connect(volume).connect(ctx.destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration + .02);
+    }
+    const sfx = {
+      pick: () => tone(360, .06, 'sine', .025),
+      wrong: () => { tone(190, .12, 'triangle'); tone(145, .16, 'triangle', .04, .09); },
+      pop: () => { tone(520, .07, 'sine', .035); tone(760, .1, 'sine', .035, .06); },
+      stamp: () => tone(165, .09, 'square', .05),
+      ding: () => { tone(880, .08, 'sine', .045); tone(1175, .16, 'sine', .035, .065); },
+      medicine: () => { tone(540, .07, 'sine', .045); tone(820, .1, 'sine', .035, .045); },
+      cry: () => { tone(260, .17, 'sine', .028); tone(215, .22, 'sine', .024, .15); },
+      comfort: () => { tone(330, .065, 'triangle', .035); tone(365, .075, 'triangle', .032, .13); },
+      cure: () => [523, 659, 784].forEach((note, index) => tone(note, .16, 'triangle', .055, index * .1)),
+      unlock: () => [392, 523, 659, 784, 1047].forEach((note, index) => tone(note, .15, 'triangle', .04, index * .08)),
+    };
+
+    function dailyPatientTarget(day = state.day) {
+      return Math.min(CONFIG.DAILY_PATIENTS_START + (day - 1) * CONFIG.DAILY_PATIENTS_STEP, CONFIG.DAILY_PATIENTS_MAX);
+    }
+    function unlockedDeptIds(day = state.day) {
+      const unlocked = new Set();
+      Object.entries(UNLOCKS).forEach(([unlockDay, value]) => {
+        if (Number(unlockDay) <= day) (value.depts || []).forEach(id => unlocked.add(id));
+      });
+      return unlocked;
+    }
+    function pharmacyWindowCount(day = state.day) {
+      let count = 0;
+      Object.entries(UNLOCKS).forEach(([unlockDay, value]) => {
+        if (Number(unlockDay) <= day && value.pharmacyWindows) count = value.pharmacyWindows;
+      });
+      return count;
+    }
+    const randomItem = items => items[Math.floor(Math.random() * items.length)];
+    function weightedItem(items, weightFor) {
+      const weighted = items.map(item => ({ item, weight: Math.max(0, Number(weightFor(item)) || 0) }));
+      const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+      if (total <= 0) return randomItem(items);
+      let cursor = Math.random() * total;
+      for (const entry of weighted) {
+        cursor -= entry.weight;
+        if (cursor < 0) return entry.item;
+      }
+      return weighted.at(-1).item;
+    }
+    function shuffled(items) {
+      const result = [...items];
+      for (let index = result.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+      }
+      return result;
+    }
+    function waitingPatients() {
+      return state.patients.filter(patient => patient.location === 'waiting');
+    }
+    function findPatient(instanceId) {
+      return state.patients.find(patient => patient.instanceId === Number(instanceId));
+    }
+    function stationPatient(location, exceptInstanceId = null) {
+      return state.patients.find(patient => patient.location === location && patient.instanceId !== exceptInstanceId);
+    }
+    function samplePatient() {
+      const unlockedPatients = PATIENTS.filter(patient => patient.unlockDay <= state.day);
+      const presentIds = new Set(state.patients.filter(patient => patient.location !== 'home').map(patient => patient.id));
+      const unseenPatients = unlockedPatients.filter(patient => !presentIds.has(patient.id));
+      const eligiblePatients = unseenPatients.length ? unseenPatients : unlockedPatients;
+      const specialKinds = ['animal', 'robot'].filter(kind => eligiblePatients.some(patient => patient.kind === kind));
+      const hasHuman = eligiblePatients.some(patient => patient.kind === 'human');
+      const kind = !hasHuman
+        ? randomItem(specialKinds)
+        : specialKinds.length && Math.random() < CONFIG.SPECIAL_PATIENT_CHANCE ? randomItem(specialKinds) : 'human';
+      let patientPool = eligiblePatients.filter(patient => patient.kind === kind);
+      if (kind === 'animal') {
+        const regularPool = patientPool.filter(patient => !patient.egg);
+        const eggPool = patientPool.filter(patient => patient.egg);
+        const allRegularAnimalsUnlocked = PATIENTS.filter(patient => patient.kind === 'animal' && !patient.egg).every(patient => patient.unlockDay <= state.day);
+        const useEgg = !regularPool.length || allRegularAnimalsUnlocked && eggPool.length > 0 && Math.random() < CONFIG.EASTER_EGG_CHANCE;
+        patientPool = useEgg ? eggPool : regularPool;
+      }
+      const template = randomItem(patientPool);
+      const depts = unlockedDeptIds();
+      const symptomPool = SYMPTOMS.filter(symptom => symptom.kind === kind && depts.has(symptom.dept));
+      const symptom = kind === 'human'
+        ? weightedItem(symptomPool, item => item.ageWeight?.[template.age] ?? 0)
+        : randomItem(symptomPool);
+      return {
+        ...template,
+        instanceId: state.nextPatientId++,
+        symptom,
+        location: 'waiting',
+        expression: 'normal',
+        crying: false,
+        waitStarted: Date.now(),
+        processing: '',
+        actionGroup: '',
+        actionTool: '',
+        dispensed: [],
+        steps: [false, false, false, false],
+      };
+    }
+    function scheduleSpawn() {
+      const reservedWaitingSeats = stationPatient('reception') ? 1 : 0;
+      if (!state.hospitalOpen || spawnTimer || state.spawned >= dailyPatientTarget() || waitingPatients().length + reservedWaitingSeats >= CONFIG.WAITING_MAX) return;
+      const jitter = (Math.random() * 2 - 1) * CONFIG.PATIENT_INTERVAL_JITTER_MS;
+      spawnTimer = setTimeout(spawnPatient, Math.max(1000, CONFIG.PATIENT_INTERVAL_MS + jitter));
+    }
+    function spawnPatient() {
+      clearTimeout(spawnTimer);
+      spawnTimer = 0;
+      const reservedWaitingSeats = stationPatient('reception') ? 1 : 0;
+      if (!state.hospitalOpen || state.spawned >= dailyPatientTarget() || waitingPatients().length + reservedWaitingSeats >= CONFIG.WAITING_MAX) return;
+      const patient = samplePatient();
+      state.patients.push(patient);
+      state.spawned += 1;
+      state.met[patient.id] = Math.max(0, Number(state.met[patient.id]) || 0) + 1;
+      saveProgress();
+      if (!$('galleryOverlay').hidden) renderGallery();
+      renderPatients();
+      renderStationTools();
+      scheduleSpawn();
+    }
+
+    function buildRooms() {
+      $('rooms').innerHTML = DEPTS.map(dept => `
+        <section id="room-${dept.id}" class="room drop-zone${unlockedDeptIds().has(dept.id) ? '' : ' locked'}" data-station="${dept.id}" data-npc="${dept.npc}">
+          <img class="scene-art" src="${scenePath(`room_${dept.id}`)}" alt="" draggable="false">
+          <h2 class="station-label" data-label="${dept.id}"><img src="${iconPath('dept', dept.id)}" alt=""></h2>
+          <img class="npc" src="${npcPath(dept.npc, 'idle')}" alt="" draggable="false">
+          <div class="npc-cue"><img src="${iconPath('dept', dept.id)}" alt=""></div>
+          <div class="station-tools" aria-label=""></div>
+        </section>
+      `).join('');
+    }
+
+    function updateUnlockVisuals() {
+      const depts = unlockedDeptIds();
+      DEPTS.forEach(dept => $(`room-${dept.id}`)?.classList.toggle('locked', !depts.has(dept.id)));
+      const windows = pharmacyWindowCount();
+      [1, 2].forEach(number => $(`pharmacyWindow${number}`).classList.toggle('locked', number > windows));
+    }
+    function stationIsUnlocked(location) {
+      if (DEPTS.some(dept => dept.id === location)) return unlockedDeptIds().has(location);
+      if (location.startsWith('pharmacy')) return Number(location.replace('pharmacy', '')) <= pharmacyWindowCount();
+      return true;
+    }
+
+    function setupAssets() {
+      $('heartIcon').src = iconPath('ui', 'heart');
+      $('calendarIcon').src = iconPath('ui', 'calendar');
+      $('bookIcon').src = iconPath('ui', 'book');
+      Object.entries(STATION_ICONS).forEach(([key, [group, id]]) => {
+        document.querySelector(`.station-label[data-label="${key}"] img`).src = iconPath(group, id);
+      });
+      $('galleryIcon').src = iconPath('ui', 'book');
+      $('soundIcon').src = iconPath('ui', 'sound_on');
+      $('stampBtn').querySelector('img').src = iconPath('ui', 'stamp');
+      $('stampMark').src = iconPath('ui', 'stamp');
+      $('heartFly').src = iconPath('ui', 'heart');
+      $('summaryOverlay').querySelector('.summary-heart img').src = iconPath('ui', 'heart');
+      $('restOverlay').querySelector('.rest-bg').src = scenePath('rest_screen');
+      $('waitingStation').querySelector('.scene-art').src = scenePath('lobby');
+      $('receptionStation').querySelector('.scene-art').src = scenePath('reception_desk');
+      $('checkStation').querySelector('.scene-art').src = scenePath('check_station');
+      $('pharmacyStation').querySelector('.scene-art').src = scenePath('pharmacy');
+      document.querySelectorAll('[data-npc]').forEach(station => {
+        station.querySelector('.npc').src = npcPath(station.dataset.npc, 'idle');
+      });
+      $('receptionStation').querySelector('.npc-cue img').src = iconPath('ui', 'stamp');
+      $('checkStation').querySelector('.npc-cue img').src = iconPath('ui', 'stamp');
+      document.querySelectorAll('.pharmacy-window .npc-cue img').forEach(image => { image.src = iconPath('med', 'fever_syrup'); });
+    }
+
+    function stationElement(location) {
+      return document.querySelector(`[data-station="${location}"]`);
+    }
+    function patientElement(instanceId) {
+      return document.querySelector(`.patient[data-patient="${instanceId}"]:not(.drag-ghost)`);
+    }
+    const STATION_ICONS = { reception: ['ui', 'stamp'], checkStation: ['check', 'magnifier'], pharmacy: ['med', 'painkiller'] };
+    function renderPatients() {
+      document.querySelectorAll('.patient:not(.drag-ghost)').forEach(item => item.remove());
+      const waiting = waitingPatients();
+      document.querySelectorAll('.drop-zone').forEach(item => {
+        item.classList.toggle('active', Boolean(stationPatient(item.dataset.station)));
+      });
+      const receptionPatient = stationPatient('reception');
+      $('stampBtn').classList.toggle('show', Boolean(receptionPatient && !receptionPatient.steps[0] && !receptionPatient.processing));
+
+      state.patients.filter(patient => patient.location !== 'home').forEach(patientData => {
+        const host = stationElement(patientData.location);
+        if (!host) return;
+        const isPrescription = !patientData.processing && patientData.location.startsWith('pharmacy') && !patientData.steps[3];
+        const queuedBehind = patientData.location === 'waiting' && waiting.indexOf(patientData) > 0;
+        const bubble = patientData.processing || isPrescription || queuedBehind ? null
+          : patientData.location === patientData.symptom.dept && !patientData.steps[2] ? ['symptom', patientData.symptom.id]
+          : nextStepHint(patientData);
+        const prescription = isPrescription ? patientData.symptom.meds.map(med => `
+          <span class="prescription-med${patientData.dispensed.includes(med) ? ' done' : ''}"><img src="${iconPath('med', med)}" alt=""></span>
+        `).join('') : '';
+        const patient = document.createElement('div');
+        patient.className = `patient${patientData.expression === 'happy' ? ' happy' : ''}${patientData.crying ? ' crying' : ''}${patientData.processing ? ` ${patientData.processing}` : ''}`;
+        patient.dataset.patient = patientData.instanceId;
+        patient.dataset.character = patientData.id;
+        patient.dataset.age = patientData.age || patientData.kind;
+        if (patientData.location === 'waiting') {
+          const waitingIndex = waiting.indexOf(patientData);
+          patient.style.setProperty('--waiting-bottom', `${8 + Math.min(waitingIndex, CONFIG.WAITING_MAX - 1) * 40}px`);
+          patient.style.zIndex = String(20 - waitingIndex);
+        }
+        patient.setAttribute('role', 'button');
+        patient.setAttribute('aria-label', textPlain(patientData.id));
+        patient.innerHTML = `
+          <img class="patient-img" src="${patientPath(patientData.id, patientData.expression)}" alt="" draggable="false">
+          ${prescription ? `<span class="symptom-bubble prescription">${prescription}</span>` : bubble ? `<span class="symptom-bubble"><img src="${iconPath(bubble[0], bubble[1])}" alt=""></span>` : ''}
+          ${patientData.crying ? '<span class="tears" aria-hidden="true"><i></i><i></i></span>' : ''}
+          <span class="question-mark" aria-hidden="true">?</span>
+          ${patientData.actionTool ? `<img class="action-tool" src="${iconPath(patientData.actionGroup, patientData.actionTool)}" alt="">` : ''}`;
+        host.appendChild(patient);
+        patient.addEventListener('pointerdown', startPatientDrag);
+      });
+    }
+
+    function updateCryingPatients() {
+      if (activeDrag || !state.hospitalOpen) return;
+      let changed = false;
+      const now = Date.now();
+      waitingPatients().forEach(patient => {
+        if (!patient.crying && !patient.processing && now - patient.waitStarted >= CONFIG.CRY_AFTER_MS) {
+          patient.crying = true;
+          patient.expression = 'cry';
+          changed = true;
+          sfx.cry();
+        }
+      });
+      if (changed && !activeDrag) renderPatients();
+    }
+    function resetPatientWait(patient) {
+      patient.crying = false;
+      if (patient.expression !== 'happy') patient.expression = 'normal';
+      patient.waitStarted = Date.now();
+    }
+    function comfortPatient(patient) {
+      if (!patient?.crying) return;
+      resetPatientWait(patient);
+      sfx.comfort();
+      renderPatients();
+      const element = patientElement(patient.instanceId);
+      if (element) {
+        element.classList.add('patting');
+        setTimeout(() => element.classList.remove('patting'), 950);
+      }
+    }
+
+    function toolsForStation(location) {
+      const patient = stationPatient(location);
+      if (!patient) return { group: '', ids: [], patient: null };
+      if (location === 'check' && !patient.steps[1]) {
+        return { group: 'check', ids: CHECK_TOOLS[patient.kind] || [], patient };
+      }
+      if (DEPTS.some(dept => dept.id === location) && patient.steps[1] && !patient.steps[2]) {
+        const ids = [...new Set(SYMPTOMS.filter(item => item.dept === location).map(item => item.treat))];
+        return { group: 'treat', ids, patient };
+      }
+      if (location.startsWith('pharmacy') && patient.steps[2] && !patient.steps[3]) {
+        const ids = [...new Set(SYMPTOMS.filter(item => item.kind === patient.kind).flatMap(item => item.meds))];
+        return { group: 'med', ids, patient };
+      }
+      return { group: '', ids: [], patient: null };
+    }
+    function renderStationTools() {
+      document.querySelectorAll('.station-tools').forEach(container => {
+        const location = container.closest('[data-station]')?.dataset.station || '';
+        const shelf = toolsForStation(location);
+        container.setAttribute('aria-label', shelf.group ? textPlain(location === 'check' ? 'checkStation' : location.startsWith('pharmacy') ? 'pharmacy' : location) : '');
+        container.innerHTML = shelf.ids.map(id => `
+          <button class="tool" type="button" data-tool="${id}" data-group="${shelf.group}" data-patient="${shelf.patient.instanceId}" aria-label="${textPlain(id)}"${shelf.patient.processing ? ' disabled' : ''}>
+            <img src="${iconPath(shelf.group, id)}" alt="" draggable="false">
+          </button>
+        `).join('');
+      });
+      document.querySelectorAll('.station-tools .tool').forEach(tool => tool.addEventListener('click', useStationTool));
+    }
+    function useStationTool(event) {
+      const button = event.currentTarget;
+      const patient = findPatient(button.dataset.patient);
+      const group = button.dataset.group;
+      const tool = button.dataset.tool;
+      if (!patient || patient.processing) return;
+      sfx.pick();
+      const wrong = group === 'med'
+        ? !patient.symptom.meds.includes(tool) || patient.dispensed.includes(tool)
+        : tool !== patient.symptom[group];
+      if (wrong) {
+        useWrongTool(patient, group, tool);
+        return;
+      }
+      useCorrectTool(patient, group, tool);
+    }
+
+    function renderGallery() {
+      $('galleryGrid').innerHTML = PATIENTS.map(patient => {
+        const count = Math.max(0, Number(state.met[patient.id]) || 0);
+        if (!count && patient.egg) {
+          return `<article class="gallery-card egg-mystery" aria-label="${textPlain('mysteryPatient')}">
+            <span class="gallery-question" aria-hidden="true">?</span>
+            <span class="gallery-card-name">${text('mysteryPatient')}</span>
+          </article>`;
+        }
+        if (!count) {
+          return `<article class="gallery-card unmet" aria-label="${textPlain('mysteryPatient')}">
+            <img class="gallery-card-art" src="${patientPath(patient.id, 'normal')}" alt="" draggable="false">
+            <span class="gallery-card-name">${text('mysteryPatient')}</span>
+            <span class="gallery-card-count" aria-hidden="true">&nbsp;</span>
+          </article>`;
+        }
+        return `<article class="gallery-card" aria-label="${textPlain(patient.id)}">
+          <img class="gallery-card-art" src="${patientPath(patient.id, 'normal')}" alt="" draggable="false">
+          <span class="gallery-card-name">${text(patient.id)}</span>
+          <span class="gallery-card-count">${text('visitCount', { n: count })}</span>
+        </article>`;
+      }).join('');
+    }
+    function openGallery() {
+      ensureAudio();
+      sfx.pop();
+      renderGallery();
+      $('galleryOverlay').hidden = false;
+      $('galleryCloseBtn').focus();
+    }
+    function closeGallery() {
+      sfx.pop();
+      $('galleryOverlay').hidden = true;
+    }
+
+    function applyStrings() {
+      document.documentElement.lang = state.lang === 'zh' ? 'zh-Hant' : state.lang === 'tw' ? 'nan-Hant' : 'nan-Latn';
+      document.title = textPlain('title');
+      $('dayText').innerHTML = text('day', { n: state.day });
+      $('galleryText').innerHTML = text('gallery');
+      $('languageMark').innerHTML = text('languageMark');
+      $('heartCount').textContent = state.hearts;
+      $('soundIcon').src = iconPath('ui', state.sound ? 'sound_on' : 'sound_off');
+      $('heartBox').setAttribute('aria-label', textPlain('hearts'));
+      $('galleryBtn').setAttribute('aria-label', textPlain('gallery'));
+      $('langBtn').setAttribute('aria-label', textPlain('language'));
+      $('soundBtn').setAttribute('aria-label', textPlain(state.sound ? 'soundOff' : 'soundOn'));
+      $('githubBtn').setAttribute('aria-label', textPlain('github'));
+      $('brandTitle').innerHTML = text('title');
+      document.querySelectorAll('[data-label]').forEach(label => {
+        const icon = label.querySelector('img');
+        const iconHtml = icon ? icon.outerHTML : '';
+        label.innerHTML = `${iconHtml}<span>${text(label.dataset.label)}</span>`;
+      });
+      $('langBtn').querySelector('small').innerHTML = text(state.lang === 'tw' ? 'languageTw' : 'languageZh');
+      $('galleryTitle').innerHTML = text('gallery');
+      $('galleryCloseBtn').setAttribute('aria-label', textPlain('galleryClose'));
+      $('summaryTitle').innerHTML = text('dayDone');
+      $('summaryHuman').innerHTML = text('treatedHuman', { n: state.treated.human });
+      $('summaryAnimal').innerHTML = text('treatedAnimal', { n: state.treated.animal });
+      $('summaryRobot').innerHTML = text('treatedRobot', { n: state.treated.robot });
+      $('summaryHearts').textContent = state.hearts;
+      $('nextDayBtn').innerHTML = text('nextDay');
+      $('restTitle').innerHTML = text('closed');
+      $('restHint').innerHTML = text('restHint');
+      $('restGalleryBtn').innerHTML = text('gallery');
+      $('openHospitalBtn').innerHTML = text('openHospital');
+      renderPatients();
+      renderStationTools();
+      if (!$('galleryOverlay').hidden) renderGallery();
+    }
+
+    function moveGhost(x, y) {
+      if (!activeDrag) return;
+      activeDrag.ghost.style.left = `${x}px`;
+      activeDrag.ghost.style.top = `${y}px`;
+      activeDrag.x = x;
+      activeDrag.y = y;
+    }
+    function addDragListeners() {
+      window.addEventListener('pointermove', dragMove, { passive: false });
+      window.addEventListener('pointerup', endDrag);
+      window.addEventListener('pointercancel', endDrag);
+    }
+    function removeDragListeners() {
+      window.removeEventListener('pointermove', dragMove);
+      window.removeEventListener('pointerup', endDrag);
+      window.removeEventListener('pointercancel', endDrag);
+    }
+    function dragMove(event) {
+      if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
+      event.preventDefault();
+      moveGhost(event.clientX, event.clientY);
+    }
+    function startPatientDrag(event) {
+      if (activeDrag || !state.hospitalOpen) return;
+      const patient = findPatient(event.currentTarget.dataset.patient);
+      if (!patient || patient.processing || patient.location === 'home') return;
+      event.preventDefault();
+      sfx.pick();
+      const source = event.currentTarget;
+      const rect = source.getBoundingClientRect();
+      const ghost = source.cloneNode(true);
+      ghost.classList.add('drag-ghost');
+      ghost.style.width = `${rect.width}px`;
+      ghost.style.height = `${rect.height}px`;
+      document.body.appendChild(ghost);
+      source.classList.add('dragging-source');
+      activeDrag = {
+        kind: 'patient', ghost, source, patient,
+        fromLocation: patient.location,
+        startX: rect.left + rect.width / 2,
+        startY: rect.top + rect.height / 2,
+        pointerStartX: event.clientX,
+        pointerStartY: event.clientY,
+        x: event.clientX, y: event.clientY,
+        pointerId: event.pointerId,
+      };
+      moveGhost(event.clientX, event.clientY);
+      document.querySelectorAll('.drop-zone').forEach(zone => {
+        if (stationIsUnlocked(zone.dataset.station)) zone.classList.add('drop-ready');
+      });
+      addDragListeners();
+    }
+    function stationAt(x, y) {
+      return [...document.querySelectorAll('.drop-zone')].find(zone => {
+        const rect = zone.getBoundingClientRect();
+        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+      });
+    }
+    function endDrag(event) {
+      if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
+      removeDragListeners();
+      document.querySelectorAll('.drop-zone').forEach(zone => zone.classList.remove('drop-ready'));
+      const drag = activeDrag;
+      const x = Number.isFinite(event.clientX) ? event.clientX : drag.x;
+      const y = Number.isFinite(event.clientY) ? event.clientY : drag.y;
+      activeDrag = null;
+      const moved = Math.hypot(x - drag.pointerStartX, y - drag.pointerStartY);
+      if (moved < 12 && drag.patient.crying) {
+        drag.ghost.remove();
+        if (drag.source && drag.source.isConnected) drag.source.classList.remove('dragging-source');
+        comfortPatient(drag.patient);
+        return;
+      }
+      const station = stationAt(x, y);
+      if (!station || station.dataset.station === drag.patient.location) {
+        bounceGhost(drag, drag.startX, drag.startY);
+        return;
+      }
+      handlePatientDrop(drag, drag.patient, station.dataset.station);
+    }
+    function bounceGhost(drag, x, y, after) {
+      drag.ghost.classList.add('bouncing');
+      requestAnimationFrame(() => {
+        drag.ghost.style.left = `${x}px`;
+        drag.ghost.style.top = `${y}px`;
+      });
+      setTimeout(() => {
+        drag.ghost.remove();
+        if (drag.source && drag.source.isConnected) drag.source.classList.remove('dragging-source');
+        if (after) after();
+      }, 450);
+    }
+    function sweepGhosts() {
+      document.querySelectorAll('.drag-ghost').forEach(ghost => {
+        const keep = (activeDrag && ghost === activeDrag.ghost) || ghost.classList.contains('bouncing');
+        if (!keep) ghost.remove();
+      });
+    }
+    function waitingSeatCenter(patient) {
+      const waiting = waitingPatients();
+      const currentIndex = waiting.indexOf(patient);
+      const targetIndex = Math.min(currentIndex >= 0 ? currentIndex : waiting.length, CONFIG.WAITING_MAX - 1);
+      const station = $('waitingStation');
+      const rect = station.getBoundingClientRect();
+      const scaleY = rect.height / station.offsetHeight;
+      const borderBottom = parseFloat(getComputedStyle(station).borderBottomWidth) || 0;
+      const waitingBottom = 8 + targetIndex * 46;
+      return { x: rect.left + rect.width / 2, y: rect.bottom - (borderBottom + waitingBottom + 55) * scaleY };
+    }
+    function acceptPatientDrop(drag, patient, location) {
+      const leftWaiting = patient.location === 'waiting' && location !== 'waiting';
+      drag.ghost.remove();
+      if (drag.source && drag.source.isConnected) drag.source.classList.remove('dragging-source');
+      patient.location = location;
+      resetPatientWait(patient);
+      renderPatients();
+      renderStationTools();
+      animateNpc(location, 'wave');
+      if (leftWaiting) scheduleSpawn();
+    }
+    function nextStepHint(patient) {
+      const nextIndex = patient.steps.findIndex(done => !done);
+      if (nextIndex === 0) return ['ui', 'stamp'];
+      if (nextIndex === 1) return ['check', 'magnifier'];
+      if (nextIndex === 2) return ['dept', patient.symptom.dept];
+      if (nextIndex === 3) return ['med', 'painkiller'];
+      return ['ui', 'heart'];
+    }
+    function rejectPatientDrop(drag, patient, station) {
+      sfx.wrong();
+      const [cueGroup, cueId] = nextStepHint(patient);
+      animateNpc(station, station === 'check' ? 'shrug' : 'shake', cueGroup, cueId);
+      const fromLocation = drag.fromLocation || patient.location;
+      const target = fromLocation === 'waiting'
+        ? waitingSeatCenter(patient)
+        : { x: drag.startX, y: drag.startY };
+      bounceGhost(drag, target.x, target.y, () => {
+        patient.location = fromLocation;
+        resetPatientWait(patient);
+        renderPatients();
+        renderStationTools();
+      });
+    }
+    function handlePatientDrop(drag, patient, station) {
+      if (station === 'waiting') {
+        acceptPatientDrop(drag, patient, 'waiting');
+        return;
+      }
+      if (stationPatient(station, patient.instanceId)) {
+        rejectPatientDrop(drag, patient, station);
+        return;
+      }
+      if (!stationIsUnlocked(station)) {
+        rejectPatientDrop(drag, patient, station);
+        return;
+      }
+      if (station === 'reception') {
+        if (!patient.steps[0]) acceptPatientDrop(drag, patient, 'reception');
+        else rejectPatientDrop(drag, patient, 'reception');
+        return;
+      }
+      if (station === 'check') {
+        if (!patient.steps[0]) rejectPatientDrop(drag, patient, 'check');
+        else if (!patient.steps[1]) acceptPatientDrop(drag, patient, 'check');
+        else rejectPatientDrop(drag, patient, 'check');
+        return;
+      }
+      const isRoom = DEPTS.some(dept => dept.id === station);
+      if (isRoom) {
+        if (patient.steps[1] && !patient.steps[2] && station === patient.symptom.dept) acceptPatientDrop(drag, patient, station);
+        else rejectPatientDrop(drag, patient, station);
+        return;
+      }
+      if (station.startsWith('pharmacy')) {
+        if (patient.steps[2] && !patient.steps[3]) acceptPatientDrop(drag, patient, station);
+        else rejectPatientDrop(drag, patient, station);
+      }
+    }
+
+    function animateNpc(location, animation, cueGroup, cueId) {
+      const station = stationElement(location);
+      if (!station) return;
+      const npc = station.querySelector('.npc');
+      if (npc) {
+        npc.src = npcPath(station.dataset.npc, animation === 'wave' ? 'wave' : 'idle');
+        npc.classList.remove('wave', 'shrug', 'shake');
+        void npc.offsetWidth;
+        npc.classList.add(animation);
+        setTimeout(() => {
+          npc.classList.remove(animation);
+          npc.src = npcPath(station.dataset.npc, 'idle');
+        }, animation === 'wave' ? 600 : 1250);
+      }
+      if (cueGroup && cueId) {
+        const cue = station.querySelector('.npc-cue');
+        if (cue) {
+          cue.querySelector('img').src = iconPath(cueGroup, cueId);
+          cue.classList.remove('show');
+          void cue.offsetWidth;
+          cue.classList.add('show');
+        }
+      }
+    }
+    function showQuestion(patient) {
+      const element = patientElement(patient.instanceId);
+      if (!element) return;
+      element.classList.add('questioning');
+      const mark = element.querySelector('.question-mark');
+      mark.classList.remove('show');
+      void mark.offsetWidth;
+      mark.classList.add('show');
+      setTimeout(() => element.classList.remove('questioning'), 950);
+    }
+    function useWrongTool(patient, group, tool) {
+      sfx.wrong();
+      if (group === 'check') {
+        animateNpc('check', 'shrug');
+        return;
+      }
+      if (group === 'treat') {
+        showQuestion(patient);
+        return;
+      }
+      if (group === 'med') {
+        animateNpc(patient.location, 'shake');
+      }
+    }
+    async function useCorrectTool(patient, group, tool) {
+      if (!patient || patient.processing) return;
+      patient.processing = group === 'check' ? 'checking' : 'treating';
+      patient.actionGroup = group;
+      patient.actionTool = tool;
+      renderPatients();
+      renderStationTools();
+      if (group === 'check') {
+        animateNpc('check', 'wave');
+        await sleep(CONFIG.CHECK_MS);
+        patient.steps[1] = true;
+        patient.processing = '';
+        patient.actionGroup = '';
+        patient.actionTool = '';
+        sfx.ding();
+        renderPatients();
+        renderStationTools();
+        return;
+      }
+      if (group === 'treat') {
+        animateNpc(patient.location, 'wave');
+        await sleep(CONFIG.TREAT_MS);
+        patient.steps[2] = true;
+        patient.processing = '';
+        patient.actionGroup = '';
+        patient.actionTool = '';
+        sfx.pop();
+        renderPatients();
+        renderStationTools();
+        flashStatus(iconPath('med', patient.symptom.meds[0]));
+        return;
+      }
+      animateNpc(patient.location, 'wave');
+      await sleep(CONFIG.DISPENSE_MS);
+      patient.dispensed.push(tool);
+      patient.processing = '';
+      patient.actionGroup = '';
+      patient.actionTool = '';
+      sfx.medicine();
+      if (!patient.symptom.meds.every(med => patient.dispensed.includes(med))) {
+        renderPatients();
+        renderStationTools();
+        return;
+      }
+      patient.steps[3] = true;
+      patient.expression = 'happy';
+      renderPatients();
+      renderStationTools();
+      setTimeout(sfx.cure, 180);
+      await sleep(1100);
+      patient.processing = 'going-home';
+      renderPatients();
+      const happyPatient = patientElement(patient.instanceId);
+      if (happyPatient) {
+        flyHeart(happyPatient);
+      }
+      await sleep(820);
+      patient.location = 'home';
+      patient.processing = '';
+      state.hearts += 1;
+      state.treated[patient.kind] += 1;
+      $('heartCount').textContent = state.hearts;
+      saveProgress();
+      renderPatients();
+      renderStationTools();
+      checkDayComplete();
+    }
+
+    async function stampPatient() {
+      const patient = stationPatient('reception');
+      if (!patient || patient.processing || patient.steps[0]) return;
+      patient.processing = 'stamping';
+      $('stampBtn').classList.remove('show');
+      animateNpc('reception', 'wave');
+      $('stampMark').classList.remove('show');
+      void $('stampMark').offsetWidth;
+      $('stampMark').classList.add('show');
+      sfx.stamp();
+      await sleep(760);
+      patient.steps[0] = true;
+      renderPatients();
+      await sleep(280);
+      patient.processing = '';
+      resetPatientWait(patient);
+      renderPatients();
+      renderStationTools();
+    }
+    function flashStatus(imageSource) {
+      const status = $('status');
+      status.innerHTML = `<img src="${imageSource}" alt="" style="width:42px;height:42px;object-fit:contain">`;
+      status.classList.remove('show');
+      void status.offsetWidth;
+      status.classList.add('show');
+    }
+    function flyHeart(origin) {
+      const from = origin.getBoundingClientRect();
+      const to = $('heartBox').getBoundingClientRect();
+      const heart = $('heartFly');
+      heart.style.left = `${from.left + from.width / 2}px`;
+      heart.style.top = `${from.top + 20}px`;
+      heart.style.setProperty('--heart-x', `${to.left + to.width / 2}px`);
+      heart.style.setProperty('--heart-y', `${to.top + to.height / 2}px`);
+      heart.classList.remove('fly');
+      void heart.offsetWidth;
+      heart.classList.add('fly');
+    }
+    function checkDayComplete() {
+      if (state.summaryShown || state.spawned < dailyPatientTarget()) return;
+      if (state.patients.some(patient => patient.location !== 'home')) return;
+      state.summaryShown = true;
+      state.hospitalOpen = false;
+      clearTimeout(spawnTimer);
+      spawnTimer = 0;
+      state.lastCloseAt = Date.now();
+      state.dayDone = true;
+      saveProgress();
+      applyStrings();
+      $('summaryOverlay').hidden = false;
+    }
+
+    function restRemainingMs() {
+      return Math.max(0, CONFIG.REST_MINUTES * 60000 - (Date.now() - state.lastCloseAt));
+    }
+    function formatCountdown(milliseconds) {
+      const seconds = Math.ceil(milliseconds / 1000);
+      const minutes = Math.floor(seconds / 60);
+      return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    }
+    function updateRestScreen() {
+      const remaining = restRemainingMs();
+      $('restCountdown').textContent = formatCountdown(remaining);
+      const ready = remaining <= 0;
+      $('restDoor').classList.toggle('lit', ready);
+      $('openHospitalBtn').hidden = !ready;
+    }
+    function showRestScreen() {
+      state.hospitalOpen = false;
+      $('summaryOverlay').hidden = true;
+      $('restOverlay').hidden = false;
+      clearInterval(restTimer);
+      updateRestScreen();
+      restTimer = setInterval(updateRestScreen, 1000);
+    }
+    function openNextDay() {
+      if (restRemainingMs() > 0) return;
+      clearInterval(restTimer);
+      restTimer = 0;
+      state.day += 1;
+      state.dayDone = false;
+      state.lastCloseAt = 0;
+      saveProgress();
+      $('restOverlay').hidden = true;
+      prepareDay(true);
+    }
+
+    function initUnlockBurst() {
+      if (unlockBurstAnim || typeof lottie === 'undefined' || !window.UNLOCK_BURST) return;
+      try {
+        unlockBurstAnim = lottie.loadAnimation({
+          container: $('unlockBurst'),
+          renderer: 'svg',
+          loop: false,
+          autoplay: false,
+          animationData: window.UNLOCK_BURST,
+        });
+        unlockBurstAnim.addEventListener('DOMLoaded', () => { unlockBurstReady = true; });
+      } catch (error) {
+        unlockBurstAnim = null;
+      }
+    }
+    function playUnlockBurst() {
+      if (unlockBurstReady) {
+        try {
+          unlockBurstAnim.stop();
+          unlockBurstAnim.goToAndPlay(0, true);
+          return;
+        } catch (error) {}
+      }
+      const fallback = $('fallbackStars');
+      fallback.innerHTML = Array.from({ length: 9 }, (_, index) => `<i style="--angle:${index * 40}deg">★</i>`).join('');
+      fallback.classList.remove('show');
+      void fallback.offsetWidth;
+      fallback.classList.add('show');
+    }
+    function unlockEventsForDay(day) {
+      const events = [];
+      const unlock = UNLOCKS[day] || {};
+      (unlock.depts || []).forEach(id => {
+        const dept = DEPTS.find(item => item.id === id);
+        if (dept) events.push({ image: npcPath(dept.npc, 'wave'), message: 'newDept' });
+      });
+      if (unlock.pharmacyWindows) events.push({ image: npcPath('pharmacist', 'wave'), message: 'newDept' });
+      PATIENTS.filter(patient => patient.unlockDay === day).forEach(patient => {
+        events.push({ image: patientPath(patient.id, 'happy'), message: 'unlocked' });
+      });
+      return events;
+    }
+    async function playUnlockSequence(events) {
+      initUnlockBurst();
+      for (const event of events) {
+        $('unlockVisitor').querySelector('img').src = event.image;
+        $('unlockMessage').innerHTML = text(event.message);
+        $('unlockShow').hidden = false;
+        $('unlockVisitor').style.animation = 'none';
+        $('unlockMessage').style.animation = 'none';
+        void $('unlockVisitor').offsetWidth;
+        $('unlockVisitor').style.animation = '';
+        $('unlockMessage').style.animation = '';
+        playUnlockBurst();
+        sfx.unlock();
+        await sleep(2100);
+        $('unlockShow').hidden = true;
+        await sleep(120);
+      }
+      startHospitalDay();
+    }
+    function startHospitalDay() {
+      state.hospitalOpen = true;
+      updateUnlockVisuals();
+      applyStrings();
+      spawnPatient();
+    }
+    function prepareDay(showUnlocks) {
+      clearTimeout(spawnTimer);
+      spawnTimer = 0;
+      state.hospitalOpen = false;
+      state.patients = [];
+      state.nextPatientId = 1;
+      state.spawned = 0;
+      state.treated = { human: 0, animal: 0, robot: 0 };
+      state.summaryShown = false;
+      $('summaryOverlay').hidden = true;
+      updateUnlockVisuals();
+      applyStrings();
+      const events = showUnlocks ? unlockEventsForDay(state.day) : [];
+      if (events.length) playUnlockSequence(events);
+      else startHospitalDay();
+    }
+    function fit() {
+      const scale = Math.min(window.innerWidth / 1180, window.innerHeight / 760);
+      $('scaler').style.transform = `translate(-50%, -50%) scale(${scale})`;
+    }
+
+    const hadSave = loadSave();
+    buildRooms();
+    setupAssets();
+    applyStrings();
+    updateUnlockVisuals();
+    setInterval(updateCryingPatients, 500);
+    setInterval(sweepGhosts, 1000);
+    document.addEventListener('pointerdown', event => {
+      if (activeDrag && event.pointerId !== activeDrag.pointerId) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+    const primeAudio = () => {
+      ensureAudio();
+      document.removeEventListener('pointerdown', primeAudio, true);
+      document.removeEventListener('keydown', primeAudio, true);
+    };
+    document.addEventListener('pointerdown', primeAudio, true);
+    document.addEventListener('keydown', primeAudio, true);
+    $('stampBtn').addEventListener('click', stampPatient);
+    $('nextDayBtn').addEventListener('click', showRestScreen);
+    $('openHospitalBtn').addEventListener('click', openNextDay);
+    $('restDoor').addEventListener('click', openNextDay);
+    $('galleryBtn').addEventListener('click', openGallery);
+    $('restGalleryBtn').addEventListener('click', openGallery);
+    $('galleryCloseBtn').addEventListener('click', closeGallery);
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !$('galleryOverlay').hidden) closeGallery();
+    });
+    $('langBtn').addEventListener('click', () => {
+      state.lang = state.lang === 'zh' ? 'tw' : 'zh';
+      saveProgress();
+      applyStrings();
+    });
+    $('soundBtn').addEventListener('click', () => {
+      state.sound = !state.sound;
+      if (state.sound) ensureAudio();
+      $('soundIcon').src = iconPath('ui', state.sound ? 'sound_on' : 'sound_off');
+      saveProgress();
+      applyStrings();
+      if (state.sound) sfx.pop();
+    });
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', fit);
+    window.addEventListener('load', initUnlockBurst);
+    fit();
+    if (state.dayDone) showRestScreen();
+    else prepareDay(!hadSave);
+  </script>
+</body>
+</html>
