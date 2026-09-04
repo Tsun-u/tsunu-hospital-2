@@ -290,6 +290,7 @@
       animation: bubblePop .55s cubic-bezier(.2, 1.5, .4, 1);
     }
     .symptom-bubble img { width: 47px; height: 47px; object-fit: contain; }
+    .symptom-bubble.question { color: var(--line); font: 1000 44px/1 sans-serif; }
     .symptom-bubble.prescription { bottom: calc(100% + 4px); }
     .symptom-bubble.prescription {
       width: auto;
@@ -447,27 +448,6 @@
     }
     #heartFly.fly { animation: heartFly .9s ease-in forwards; }
     @keyframes heartFly { 0% { opacity: 1; transform: scale(.5) rotate(-12deg); } 45% { opacity: 1; transform: scale(1.3) rotate(12deg); } 100% { left: var(--heart-x); top: var(--heart-y); opacity: .2; transform: scale(.45) rotate(28deg); } }
-    #status {
-      position: absolute;
-      z-index: 200;
-      left: 50%;
-      top: 77px;
-      min-width: 64px;
-      min-height: 44px;
-      padding: 6px 17px;
-      display: grid;
-      place-items: center;
-      border: 3px solid var(--line);
-      border-radius: 16px;
-      background: rgba(255, 255, 255, .96);
-      font-size: 18px;
-      font-weight: 950;
-      opacity: 0;
-      transform: translate(-50%, -15px) scale(.8);
-      pointer-events: none;
-    }
-    #status.show { animation: statusPop 1.25s ease-out; }
-    @keyframes statusPop { 18%, 76% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -8px) scale(.92); } }
     .pharmacy-windows { position: absolute; z-index: 3; inset: 48px 5px 5px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
     .pharmacy-window { position: relative; min-width: 64px; border: 2px dashed rgba(90,73,63,.45); border-radius: 14px; overflow: visible; }
     .pharmacy-window .npc { left: auto; right: 92px; bottom: 6px; width: 110px; height: 110px; }
@@ -654,7 +634,6 @@
       <div id="rooms" class="rooms-row"></div>
 
     </section>
-    <div id="status" role="status" aria-live="polite"></div>
     <section id="summaryOverlay" class="overlay" hidden>
       <div class="summary-card">
         <h2 id="summaryTitle"></h2>
@@ -986,8 +965,10 @@
         if (!host) return;
         const isPrescription = !patientData.processing && patientData.location.startsWith('pharmacy') && !patientData.steps[3];
         const queuedBehind = patientData.location === 'waiting' && waiting.indexOf(patientData) > 0;
+        const awaitingCheck = patientData.steps[0] && !patientData.steps[1];
         const bubble = patientData.processing || isPrescription || queuedBehind ? null
           : patientData.location === patientData.symptom.dept && !patientData.steps[2] ? ['symptom', patientData.symptom.id]
+          : awaitingCheck ? 'question'
           : nextStepHint(patientData);
         const prescription = isPrescription ? patientData.symptom.meds.map(med => `
           <span class="prescription-med${patientData.dispensed.includes(med) ? ' done' : ''}"><img src="${iconPath('med', med)}" alt=""></span>
@@ -1006,7 +987,9 @@
         patient.setAttribute('aria-label', textPlain(patientData.id));
         patient.innerHTML = `
           <img class="patient-img" src="${patientPath(patientData.id, patientData.expression)}" alt="" draggable="false">
-          ${prescription ? `<span class="symptom-bubble prescription">${prescription}</span>` : bubble ? `<span class="symptom-bubble"><img src="${iconPath(bubble[0], bubble[1])}" alt=""></span>` : ''}
+          ${prescription ? `<span class="symptom-bubble prescription">${prescription}</span>`
+            : bubble === 'question' ? '<span class="symptom-bubble question">?</span>'
+            : bubble ? `<span class="symptom-bubble"><img src="${iconPath(bubble[0], bubble[1])}" alt=""></span>` : ''}
           ${patientData.crying ? '<span class="tears" aria-hidden="true"><i></i><i></i></span>' : ''}
           <span class="question-mark" aria-hidden="true">?</span>
           ${patientData.actionTool ? `<img class="action-tool" src="${iconPath(patientData.actionGroup, patientData.actionTool)}" alt="">` : ''}`;
@@ -1377,12 +1360,16 @@
       mark.classList.add('show');
       setTimeout(() => element.classList.remove('questioning'), 950);
     }
-    function useWrongTool(patient, group, tool) {
-      sfx.wrong();
+    async function useWrongTool(patient, group, tool) {
       if (group === 'check') {
+        await playCheckAnimation(patient, tool);
+        sfx.wrong();
+        renderPatients();
+        renderStationTools();
         animateNpc('check', 'shrug');
         return;
       }
+      sfx.wrong();
       if (group === 'treat') {
         showQuestion(patient);
         return;
@@ -1391,25 +1378,33 @@
         animateNpc(patient.location, 'shake');
       }
     }
-    async function useCorrectTool(patient, group, tool) {
-      if (!patient || patient.processing) return;
-      patient.processing = group === 'check' ? 'checking' : 'treating';
-      patient.actionGroup = group;
+    async function playCheckAnimation(patient, tool) {
+      patient.processing = 'checking';
+      patient.actionGroup = 'check';
       patient.actionTool = tool;
       renderPatients();
       renderStationTools();
+      animateNpc('check', 'wave');
+      await sleep(CONFIG.CHECK_MS);
+      patient.processing = '';
+      patient.actionGroup = '';
+      patient.actionTool = '';
+    }
+    async function useCorrectTool(patient, group, tool) {
+      if (!patient || patient.processing) return;
       if (group === 'check') {
-        animateNpc('check', 'wave');
-        await sleep(CONFIG.CHECK_MS);
+        await playCheckAnimation(patient, tool);
         patient.steps[1] = true;
-        patient.processing = '';
-        patient.actionGroup = '';
-        patient.actionTool = '';
         sfx.ding();
         renderPatients();
         renderStationTools();
         return;
       }
+      patient.processing = 'treating';
+      patient.actionGroup = group;
+      patient.actionTool = tool;
+      renderPatients();
+      renderStationTools();
       if (group === 'treat') {
         animateNpc(patient.location, 'wave');
         await sleep(CONFIG.TREAT_MS);
@@ -1420,7 +1415,6 @@
         sfx.pop();
         renderPatients();
         renderStationTools();
-        flashStatus(iconPath('med', patient.symptom.meds[0]));
         return;
       }
       animateNpc(patient.location, 'wave');
@@ -1477,13 +1471,6 @@
       resetPatientWait(patient);
       renderPatients();
       renderStationTools();
-    }
-    function flashStatus(imageSource) {
-      const status = $('status');
-      status.innerHTML = `<img src="${imageSource}" alt="" style="width:42px;height:42px;object-fit:contain">`;
-      status.classList.remove('show');
-      void status.offsetWidth;
-      status.classList.add('show');
     }
     function flyHeart(origin) {
       const from = origin.getBoundingClientRect();
