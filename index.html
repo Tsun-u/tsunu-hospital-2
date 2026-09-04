@@ -971,10 +971,10 @@
         if (!host) return;
         const isPrescription = !patientData.processing && patientData.location.startsWith('pharmacy') && !patientData.steps[3];
         const queuedBehind = patientData.location === 'waiting' && waiting.indexOf(patientData) > 0;
-        const awaitingCheck = patientData.steps[0] && !patientData.steps[1];
+        const atCheckStation = patientData.location === 'check' && !patientData.steps[1];
         const bubble = patientData.processing || isPrescription || queuedBehind ? null
           : patientData.location === patientData.symptom.dept && !patientData.steps[2] ? ['symptom', patientData.symptom.id]
-          : awaitingCheck ? 'question'
+          : atCheckStation ? 'question'
           : nextStepHint(patientData);
         const prescription = isPrescription ? patientData.symptom.meds.map(med => `
           <span class="prescription-med${patientData.dispensed.includes(med) ? ' done' : ''}"><img src="${iconPath('med', med)}" alt=""></span>
