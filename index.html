@@ -302,6 +302,8 @@
     }
     .prescription-med { position: relative; width: 30px; height: 30px; display: grid; place-items: center; }
     .symptom-bubble.prescription .prescription-med img { width: 30px; height: 30px; }
+    .symptom-bubble.plan { flex-wrap: wrap; width: 112px; height: auto; row-gap: 2px; padding: 4px 6px; justify-content: center; }
+    .symptom-bubble.plan .plan-symptom { width: 34px; height: 34px; }
     .prescription-med.done img { opacity: .35; }
     .prescription-med.done::after {
       content: "✓";
@@ -419,6 +421,9 @@
     .tool[disabled] { opacity: .45; cursor: default; }
     .room .station-tools { width: 52px; }
     .room .tool { width: 52px; height: 52px; }
+    .room .station-tools.dense { width: 128px; display: grid; grid-template-columns: repeat(3, 40px); grid-auto-rows: 40px; gap: 4px; }
+    .room .station-tools.dense .tool { width: 40px; height: 40px; border-width: 2px; }
+    .room .station-tools.dense .tool img { width: 30px; height: 30px; }
     .room .tool img { width: 38px; height: 38px; }
     #checkStation .station-tools { width: 134px; display: grid; grid-template-columns: repeat(3, 42px); grid-auto-rows: 42px; gap: 4px; }
     #checkStation .tool { width: 42px; height: 42px; border-width: 2px; }
@@ -869,6 +874,7 @@
         actionGroup: '',
         actionTool: '',
         dispensed: [],
+        treated: [],
         steps: [false, false, false, false],
       };
     }
@@ -973,6 +979,11 @@
         const prescription = isPrescription ? patientData.symptom.meds.map(med => `
           <span class="prescription-med${patientData.dispensed.includes(med) ? ' done' : ''}"><img src="${iconPath('med', med)}" alt=""></span>
         `).join('') : '';
+        const treatPlan = bubble && bubble[0] === 'symptom' && patientData.symptom.treat.length > 1 ? `
+          <img class="plan-symptom" src="${iconPath('symptom', patientData.symptom.id)}" alt="">
+          ${patientData.symptom.treat.map((step, index) => `
+            <span class="prescription-med${index < patientData.treated.length ? ' done' : ''}"><img src="${iconPath('treat', step)}" alt=""></span>
+          `).join('')}` : '';
         const patient = document.createElement('div');
         patient.className = `patient${patientData.expression === 'happy' ? ' happy' : ''}${patientData.crying ? ' crying' : ''}${patientData.processing ? ` ${patientData.processing}` : ''}`;
         patient.dataset.patient = patientData.instanceId;
@@ -988,6 +999,7 @@
         patient.innerHTML = `
           <img class="patient-img" src="${patientPath(patientData.id, patientData.expression)}" alt="" draggable="false">
           ${prescription ? `<span class="symptom-bubble prescription">${prescription}</span>`
+            : treatPlan ? `<span class="symptom-bubble prescription plan">${treatPlan}</span>`
             : bubble === 'question' ? '<span class="symptom-bubble question">?</span>'
             : bubble ? `<span class="symptom-bubble"><img src="${iconPath(bubble[0], bubble[1])}" alt=""></span>` : ''}
           ${patientData.crying ? '<span class="tears" aria-hidden="true"><i></i><i></i></span>' : ''}
@@ -1036,7 +1048,7 @@
         return { group: 'check', ids: CHECK_TOOLS[patient.kind] || [], patient };
       }
       if (DEPTS.some(dept => dept.id === location) && patient.steps[1] && !patient.steps[2]) {
-        const ids = [...new Set(SYMPTOMS.filter(item => item.dept === location).map(item => item.treat))];
+        const ids = [...new Set(SYMPTOMS.filter(item => item.dept === location).flatMap(item => item.treat))];
         return { group: 'treat', ids, patient };
       }
       if (location.startsWith('pharmacy') && patient.steps[2] && !patient.steps[3]) {
@@ -1050,6 +1062,7 @@
         const location = container.closest('[data-station]')?.dataset.station || '';
         const shelf = toolsForStation(location);
         container.setAttribute('aria-label', shelf.group ? textPlain(location === 'check' ? 'checkStation' : location.startsWith('pharmacy') ? 'pharmacy' : location) : '');
+        container.classList.toggle('dense', shelf.group === 'treat' && shelf.ids.length > 3);
         container.innerHTML = shelf.ids.map(id => `
           <button class="tool" type="button" data-tool="${id}" data-group="${shelf.group}" data-patient="${shelf.patient.instanceId}" aria-label="${textPlain(id)}"${shelf.patient.processing ? ' disabled' : ''}>
             <img src="${iconPath(shelf.group, id)}" alt="" draggable="false">
@@ -1065,9 +1078,9 @@
       const tool = button.dataset.tool;
       if (!patient || patient.processing) return;
       sfx.pick();
-      const wrong = group === 'med'
-        ? !patient.symptom.meds.includes(tool) || patient.dispensed.includes(tool)
-        : tool !== patient.symptom[group];
+      const wrong = group === 'med' ? !patient.symptom.meds.includes(tool) || patient.dispensed.includes(tool)
+        : group === 'treat' ? tool !== nextTreatStep(patient)
+        : tool !== patient.symptom.check;
       if (wrong) {
         useWrongTool(patient, group, tool);
         return;
@@ -1267,6 +1280,9 @@
       animateNpc(location, 'wave');
       if (leftWaiting) scheduleSpawn();
     }
+    function nextTreatStep(patient) {
+      return patient.symptom.treat[patient.treated.length];
+    }
     function nextStepHint(patient) {
       const nextIndex = patient.steps.findIndex(done => !done);
       if (nextIndex === 0) return ['ui', 'stamp'];
@@ -1408,7 +1424,8 @@
       if (group === 'treat') {
         animateNpc(patient.location, 'wave');
         await sleep(CONFIG.TREAT_MS);
-        patient.steps[2] = true;
+        patient.treated.push(tool);
+        patient.steps[2] = patient.treated.length === patient.symptom.treat.length;
         patient.processing = '';
         patient.actionGroup = '';
         patient.actionTool = '';

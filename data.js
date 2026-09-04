@@ -7,6 +7,7 @@
    - 特別病人（animal / robot）以 SPECIAL_PATIENT_CHANCE 出現，前提是該 kind 有已解鎖病人
    - 彩蛋動物（egg）在常駐 10 隻全解鎖後，以 EASTER_EGG_CHANCE 取代一般動物
    - 病人與科別的解鎖看 unlockDay 與 UNLOCKS；day 從 1 起算
+   - treat 是治療步驟的順序清單，診間工具要照這個順序點；牙科是多步驟，其他科目前都一步
    ===================================================================== */
 
 const CONFIG = {
@@ -36,25 +37,26 @@ const DEPTS = [
 ];
 
 const SYMPTOMS = [
-  { id: 'fever',       kind: 'human', check: 'thermometer', dept: 'internal', treat: 'icepack',       meds: ['fever_syrup', 'vitamin'],                    ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
-  { id: 'cold',        kind: 'human', check: 'stethoscope', dept: 'internal', treat: 'spray',         meds: ['cough_syrup', 'allergy_syrup', 'fever_syrup'], ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
-  { id: 'gastro',      kind: 'human', check: 'stethoscope', dept: 'internal', treat: 'heat_bag',      meds: ['stomach_pill', 'painkiller'],                ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
-  { id: 'runny_nose',  kind: 'human', check: 'flashlight',  dept: 'ent',      treat: 'tissue',        meds: ['allergy_syrup', 'vitamin'],                  ageWeight: { kid: 2, teen: 1, adult: 1, elder: 1 } },
-  { id: 'nosebleed',   kind: 'human', check: 'flashlight',  dept: 'ent',      treat: 'cotton',        meds: ['vitamin', 'allergy_syrup', 'ointment'],      ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
-  { id: 'cavity',      kind: 'human', check: 'flashlight',  dept: 'dental',   treat: 'toothbrush',    meds: ['mouthwash', 'painkiller'],                   ageWeight: { kid: 2, teen: 1, adult: 1, elder: 1 } },
-  { id: 'scrape',      kind: 'human', check: 'magnifier',   dept: 'surgery',  treat: 'bandage',       meds: ['ointment'],                                  ageWeight: { kid: 3, teen: 1, adult: 1, elder: 1 } },
-  { id: 'fracture',    kind: 'human', check: 'xray',        dept: 'surgery',  treat: 'cast',          meds: ['painkiller'],                                ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
-  { id: 'backache',    kind: 'human', check: 'xray',        dept: 'tcm',      treat: 'heat_patch',    meds: ['herbal_pack'],                               ageWeight: { kid: 0, teen: 0, adult: 1, elder: 3 } },
-  { id: 'bottom_pain', kind: 'human', check: 'magnifier',   dept: 'tcm',      treat: 'donut_cushion', meds: ['herbal_pack', 'ointment'],                   ageWeight: { kid: 3, teen: 1, adult: 1, elder: 1 } },
-  { id: 'pet_fever',   kind: 'animal', check: 'thermometer', dept: 'vet', treat: 'vet_icepack',    meds: ['bone_pill', 'vitamin'] },
-  { id: 'pet_tummy',   kind: 'animal', check: 'stethoscope', dept: 'vet', treat: 'vet_medicine',   meds: ['fish_pill'] },
-  { id: 'pet_scrape',  kind: 'animal', check: 'magnifier',   dept: 'vet', treat: 'vet_bandage',    meds: ['bone_pill', 'painkiller'] },
-  { id: 'pet_cold',    kind: 'animal', check: 'flashlight',  dept: 'vet', treat: 'vet_tissue',     meds: ['fish_pill', 'vitamin'] },
-  { id: 'pet_cavity',  kind: 'animal', check: 'flashlight',  dept: 'vet', treat: 'vet_toothbrush', meds: ['bone_pill', 'painkiller'] },
-  { id: 'pet_fleas',   kind: 'animal', check: 'magnifier',   dept: 'vet', treat: 'spray',          meds: ['fish_pill', 'ointment'] },
-  { id: 'loose_screw', kind: 'robot', check: 'detector',      dept: 'repair', treat: 'screwdriver', meds: ['oil_can'] },
-  { id: 'stuck_gear',  kind: 'robot', check: 'wrench_tap',    dept: 'repair', treat: 'wrench',      meds: ['oil_can'] },
-  { id: 'low_battery', kind: 'robot', check: 'battery_meter', dept: 'repair', treat: 'charger',     meds: ['battery'] },
+  { id: 'fever',       kind: 'human', check: 'thermometer', dept: 'internal', treat: ['icepack'],       meds: ['fever_syrup', 'vitamin'],                    ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
+  { id: 'cold',        kind: 'human', check: 'stethoscope', dept: 'internal', treat: ['spray'],         meds: ['cough_syrup', 'allergy_syrup', 'fever_syrup'], ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
+  { id: 'gastro',      kind: 'human', check: 'stethoscope', dept: 'internal', treat: ['heat_bag'],      meds: ['stomach_pill', 'painkiller'],                ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
+  { id: 'runny_nose',  kind: 'human', check: 'flashlight',  dept: 'ent',      treat: ['tissue'],        meds: ['allergy_syrup', 'vitamin'],                  ageWeight: { kid: 2, teen: 1, adult: 1, elder: 1 } },
+  { id: 'nosebleed',   kind: 'human', check: 'flashlight',  dept: 'ent',      treat: ['cotton'],        meds: ['vitamin', 'allergy_syrup', 'ointment'],      ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
+  { id: 'cavity',      kind: 'human', check: 'flashlight',  dept: 'dental',   treat: ['toothbrush', 'xray', 'scaler', 'filling'],   meds: ['mouthwash', 'painkiller'], ageWeight: { kid: 2, teen: 1, adult: 1, elder: 1 } },
+  { id: 'loose_tooth', kind: 'human', check: 'flashlight',  dept: 'dental',   treat: ['toothbrush', 'xray', 'scaler', 'extractor'], meds: ['painkiller', 'mouthwash'], ageWeight: { kid: 3, teen: 1, adult: 0, elder: 1 } },
+  { id: 'scrape',      kind: 'human', check: 'magnifier',   dept: 'surgery',  treat: ['bandage'],       meds: ['ointment'],                                  ageWeight: { kid: 3, teen: 1, adult: 1, elder: 1 } },
+  { id: 'fracture',    kind: 'human', check: 'xray',        dept: 'surgery',  treat: ['cast'],          meds: ['painkiller'],                                ageWeight: { kid: 1, teen: 1, adult: 1, elder: 1 } },
+  { id: 'backache',    kind: 'human', check: 'xray',        dept: 'tcm',      treat: ['heat_patch'],    meds: ['herbal_pack'],                               ageWeight: { kid: 0, teen: 0, adult: 1, elder: 3 } },
+  { id: 'bottom_pain', kind: 'human', check: 'magnifier',   dept: 'tcm',      treat: ['donut_cushion'], meds: ['herbal_pack', 'ointment'],                   ageWeight: { kid: 3, teen: 1, adult: 1, elder: 1 } },
+  { id: 'pet_fever',   kind: 'animal', check: 'thermometer', dept: 'vet', treat: ['vet_icepack'],    meds: ['bone_pill', 'vitamin'] },
+  { id: 'pet_tummy',   kind: 'animal', check: 'stethoscope', dept: 'vet', treat: ['vet_medicine'],   meds: ['fish_pill'] },
+  { id: 'pet_scrape',  kind: 'animal', check: 'magnifier',   dept: 'vet', treat: ['vet_bandage'],    meds: ['bone_pill', 'painkiller'] },
+  { id: 'pet_cold',    kind: 'animal', check: 'flashlight',  dept: 'vet', treat: ['vet_tissue'],     meds: ['fish_pill', 'vitamin'] },
+  { id: 'pet_cavity',  kind: 'animal', check: 'flashlight',  dept: 'vet', treat: ['vet_toothbrush'], meds: ['bone_pill', 'painkiller'] },
+  { id: 'pet_fleas',   kind: 'animal', check: 'magnifier',   dept: 'vet', treat: ['spray'],          meds: ['fish_pill', 'ointment'] },
+  { id: 'loose_screw', kind: 'robot', check: 'detector',      dept: 'repair', treat: ['screwdriver'], meds: ['oil_can'] },
+  { id: 'stuck_gear',  kind: 'robot', check: 'wrench_tap',    dept: 'repair', treat: ['wrench'],      meds: ['oil_can'] },
+  { id: 'low_battery', kind: 'robot', check: 'battery_meter', dept: 'repair', treat: ['charger'],     meds: ['battery'] },
 ];
 
 const CHECK_TOOLS = {
