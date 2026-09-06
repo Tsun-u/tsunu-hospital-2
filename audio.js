@@ -2,7 +2,7 @@
    作曲器是純函式：固定種子 → 音符表；排程器把音符表送進 AudioContext。
    編曲心法參考 AMIX「EASY 8BIT EDITOR」公開的規則（曲式 A→A'→B→サビ、動機反覆與變形、
    句尾落根音、三度下和聲、貝斯八度跳、8 beat 鼓組、25% duty 的 pulse 音色），實作為本專案原創。
-   對外：Music.compose / attach / play / stop / setEnabled / setSeeds / renderOffline */
+   對外：Music.compose / attach / play / setEnabled / setSeeds / renderOffline / status */
 
 const Music = (() => {
   const MASTER_VOLUME = 0.05;
@@ -396,18 +396,13 @@ const Music = (() => {
     if (current && current.bus) fadeOut(current);
     startSong(kind);
   }
-  function stop() {
-    if (current && current.bus) fadeOut(current);
-    current = null;
-    clearInterval(timer);
-    timer = 0;
-  }
   function setEnabled(on) {
+    const resumed = on && !enabled;
     enabled = on;
     if (!musicOut) return;
     musicOut.gain.cancelScheduledValues(ctx.currentTime);
     musicOut.gain.linearRampToValueAtTime(on ? MASTER_VOLUME : 0, ctx.currentTime + 0.4);
-    if (on && current && current.bus) { current.loopStart = ctx.currentTime + 0.05; current.index = 0; }
+    if (resumed && current && current.bus) { current.loopStart = ctx.currentTime + 0.05; current.index = 0; }   // 關掉再開：從頭播
   }
   function setSeeds(next) {
     seeds = { ...seeds, ...next };
@@ -431,7 +426,7 @@ const Music = (() => {
 
   const status = () => current ? { kind: current.kind, scheduling: Boolean(current.bus), index: current.index, seeds: { ...seeds } } : null;
 
-  return { compose, attach, play, stop, setEnabled, setSeeds, renderOffline, status, DEFAULT_SEEDS, MASTER_VOLUME };
+  return { compose, attach, play, setEnabled, setSeeds, renderOffline, status, DEFAULT_SEEDS, MASTER_VOLUME };
 })();
 
 if (typeof module !== 'undefined') module.exports = Music;

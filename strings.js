@@ -27,7 +27,7 @@ const STRINGS = {
   language:      { zh: '切換語言', tw: '換語言', lo: 'uānn gí-giân' },
   soundOn:       { zh: '開啟音效', tw: '開聲音', lo: 'khui siann-im' },
   soundOff:      { zh: '關閉音效', tw: '聲音禁掉', lo: 'siann-im kìm-tiāu' },
-  musicOn:       { zh: '放音樂', tw: '放音樂', lo: 'pàng im-ga̍k' },
+  musicOn:       { zh: '開啟音樂', tw: '放音樂', lo: 'pàng im-ga̍k' },
   musicOff:      { zh: '關閉音樂', tw: '音樂禁掉', lo: 'im-ga̍k kìm-tiāu' },
   github:        { zh: 'GitHub', tw: '', lo: '' },
   comfort:       { zh: '拍拍安撫', tw: '搭搭惜惜', lo: 'tah-tah sioh-sioh' },
