@@ -681,7 +681,7 @@
 
   <script src="data.js"></script>
   <script src="strings.js"></script>
-  <script src="audio.js?v=3"></script>
+  <script src="audio.js?v=4"></script>
   <script>
     'use strict';
 
@@ -771,11 +771,23 @@
       if (audioContext) Music.attach(audioContext);
       return audioContext;
     }
+    /* 旋律種子：奇數天與偶數天各一組（童童與女兒 2026-09-06 試聽定案）；?seed=看診,休診 可暫時蓋過。 */
+    const MUSIC_SEEDS = { odd: { open: 1, rest: 33 }, even: { open: 11, rest: 22 } };
+    const seedOverride = (() => {
+      const param = new URLSearchParams(location.search).get('seed');
+      if (!param) return null;
+      const [open, rest] = param.split(',').map(Number);
+      return { open: open || 1, rest: rest || open || 1 };
+    })();
+    function musicSeeds() {
+      return seedOverride || MUSIC_SEEDS[state.day % 2 ? 'odd' : 'even'];
+    }
     /* 背景音樂跟著營業狀態走：當天還沒結束放看診曲，關診（總結畫面起到隔天開門）放休診曲。 */
     function syncMusic() {
       if (!state.music) { Music.setEnabled(false); return; }
       Music.setEnabled(true);
-      Music.play(state.dayDone ? 'rest' : 'open');
+      const kind = state.dayDone ? 'rest' : 'open';
+      Music.play(kind, musicSeeds()[kind]);
     }
     function tone(frequency, duration = .1, type = 'sine', gain = .045, delay = 0) {
       const ctx = audioContext;
@@ -1706,12 +1718,7 @@
       syncMusic();
       if (state.music) sfx.pop();
     });
-    /* 開發期試聽：?seed=看診,休診（例如 ?seed=3,5）換旋律種子。 */
-    const seedParam = new URLSearchParams(location.search).get('seed');
-    if (seedParam) {
-      const [open, rest] = seedParam.split(',').map(Number);
-      Music.setSeeds({ open: open || Music.DEFAULT_SEEDS.open, rest: rest || open || Music.DEFAULT_SEEDS.rest });
-    }
+
     window.addEventListener('resize', fit);
     window.addEventListener('orientationchange', fit);
     window.addEventListener('load', initUnlockBurst);

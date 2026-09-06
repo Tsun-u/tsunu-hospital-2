@@ -2,13 +2,12 @@
    作曲器是純函式：固定種子 → 音符表；排程器把音符表送進 AudioContext。
    編曲心法參考 AMIX「EASY 8BIT EDITOR」公開的規則（曲式 A→A'→B→サビ、動機反覆與變形、
    句尾落根音、三度下和聲、貝斯八度跳、8 beat 鼓組、25% duty 的 pulse 音色），實作為本專案原創。
-   對外：Music.compose / attach / play / setEnabled / setSeeds / renderOffline / status */
+   對外：Music.compose / attach / play(kind, seed) / setEnabled / renderOffline / status */
 
 const Music = (() => {
   const MASTER_VOLUME = 0.05;
   const LOOKAHEAD_SECONDS = 0.3;
   const TICK_MS = 100;
-  const DEFAULT_SEEDS = { open: 11, rest: 33 };   // 童童與女兒 2026-09-06 試聽定案
   /* 每首曲子的音量係數：四軌合起來的看診曲比單軌的休診曲響很多，壓到峰值比音效低 6 dB 以上。 */
   const SONG_LEVEL = { open: 0.3, rest: 0.75 };
 
@@ -352,8 +351,7 @@ const Music = (() => {
   let voices = null;
   let musicOut = null;
   let enabled = true;
-  let seeds = { ...DEFAULT_SEEDS };
-  let current = null;       // { kind, bus, events, loopSeconds, loopStart, index }
+  let current = null;       // { kind, seed, bus, events, loopSeconds, loopStart, index }
   let timer = 0;
 
   function attach(audioContext) {
@@ -363,16 +361,16 @@ const Music = (() => {
     musicOut = ctx.createGain();
     musicOut.gain.value = enabled ? MASTER_VOLUME : 0;
     musicOut.connect(ctx.destination);
-    if (current) startSong(current.kind);
+    if (current) startSong(current.kind, current.seed);
   }
 
-  function startSong(kind) {
-    const { events, loopSeconds } = songEvents(compose(kind, seeds[kind]));
+  function startSong(kind, seed) {
+    const { events, loopSeconds } = songEvents(compose(kind, seed));
     const bus = ctx.createGain();
     bus.gain.value = 0.0001;
     bus.connect(musicOut);
     bus.gain.linearRampToValueAtTime(SONG_LEVEL[kind], ctx.currentTime + 0.6);
-    current = { kind, bus, events, loopSeconds, loopStart: ctx.currentTime + 0.05, index: 0 };
+    current = { kind, seed, bus, events, loopSeconds, loopStart: ctx.currentTime + 0.05, index: 0 };
     if (!timer) timer = setInterval(tick, TICK_MS);
   }
   function fadeOut(song) {
@@ -401,11 +399,11 @@ const Music = (() => {
     }
   }
 
-  function play(kind) {
-    if (current && current.kind === kind) return;
-    if (!ctx) { current = { kind }; return; }
+  function play(kind, seed) {
+    if (current && current.kind === kind && current.seed === seed) return;
+    if (!ctx) { current = { kind, seed }; return; }
     if (current && current.bus) fadeOut(current);
-    startSong(kind);
+    startSong(kind, seed);
   }
   function setEnabled(on) {
     const resumed = on && !enabled;
@@ -414,10 +412,6 @@ const Music = (() => {
     musicOut.gain.cancelScheduledValues(ctx.currentTime);
     musicOut.gain.linearRampToValueAtTime(on ? MASTER_VOLUME : 0, ctx.currentTime + 0.4);
     if (resumed && current && current.bus) { current.loopStart = ctx.currentTime + 0.05; current.index = 0; }   // 關掉再開：從頭播
-  }
-  function setSeeds(next) {
-    seeds = { ...seeds, ...next };
-    if (current && current.bus) { const kind = current.kind; fadeOut(current); current = null; startSong(kind); }
   }
 
   /* 離線渲染整段（音量檢查用）：回傳 AudioBuffer。 */
@@ -428,16 +422,16 @@ const Music = (() => {
     const out = offline.createGain();
     out.gain.value = MASTER_VOLUME * SONG_LEVEL[kind];
     out.connect(offline.destination);
-    const { events, loopSeconds } = songEvents(compose(kind, seed === undefined ? seeds[kind] : seed));
+    const { events, loopSeconds } = songEvents(compose(kind, seed));
     for (let loopStart = 0; loopStart < seconds; loopStart += loopSeconds) {
       events.forEach(event => { if (loopStart + event.t < seconds) offlineVoices[event.voice](out, event, loopStart + event.t); });
     }
     return offline.startRendering();
   }
 
-  const status = () => current ? { kind: current.kind, scheduling: Boolean(current.bus), index: current.index, seeds: { ...seeds } } : null;
+  const status = () => current ? { kind: current.kind, seed: current.seed, scheduling: Boolean(current.bus), index: current.index } : null;
 
-  return { compose, attach, play, setEnabled, setSeeds, renderOffline, status, DEFAULT_SEEDS, MASTER_VOLUME };
+  return { compose, attach, play, setEnabled, renderOffline, status, MASTER_VOLUME };
 })();
 
 if (typeof module !== 'undefined') module.exports = Music;
