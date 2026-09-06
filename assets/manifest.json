@@ -29,7 +29,8 @@
     "tiger":    { "group": "animal_egg", "exprs": ["normal", "cry", "happy"] },
     "dinosaur": { "group": "animal_egg", "exprs": ["normal", "cry", "happy"] },
     "unicorn":  { "group": "animal_egg", "exprs": ["normal", "cry", "happy"] },
-    "robot":    { "group": "robot", "exprs": ["normal", "cry", "happy"] }
+    "robot":    { "group": "robot", "exprs": ["normal", "cry", "happy"] },
+    "tsunu":    { "group": "human_adult", "exprs": ["normal", "cry", "happy"] }
   },
   "npc": {
     "reception":    { "poses": ["idle", "wave"] },

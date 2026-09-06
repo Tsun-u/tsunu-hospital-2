@@ -6,6 +6,8 @@
    - 每日病人數 = min(DAILY_PATIENTS_START + (day-1) * DAILY_PATIENTS_STEP, DAILY_PATIENTS_MAX)
    - 特別病人（animal / robot）以 SPECIAL_PATIENT_CHANCE 出現，前提是該 kind 有已解鎖病人
    - 彩蛋動物（egg）在常駐 10 隻全解鎖後，以 EASTER_EGG_CHANCE 取代一般動物
+   - 彩蛋病人「機器人叔叔」（tsunu）解鎖後以 EASTER_EGG_CHANCE 取代一般人類；symptomKinds 列出他能抽的病症種類，
+     抽到哪種病症，這次來就算哪種病人（檢查工具、藥品、統計都跟著病症的 kind）
    - 病人與科別的解鎖看 unlockDay 與 UNLOCKS；day 從 1 起算
    - treat 是治療步驟的順序清單，診間工具要照這個順序點；牙科是多步驟，其他科目前都一步
    ===================================================================== */
@@ -95,6 +97,7 @@ const PATIENTS = [
   { id: 'dinosaur', kind: 'animal', unlockDay: 9, egg: true },
   { id: 'unicorn',  kind: 'animal', unlockDay: 9, egg: true },
   { id: 'robot',    kind: 'robot',  unlockDay: 8 },
+  { id: 'tsunu',    kind: 'human',  symptomKinds: ['human', 'robot'], age: 'adult', unlockDay: 8, egg: true },
 ];
 
 const UNLOCKS = {

@@ -157,6 +157,7 @@ const STRINGS = {
   dinosaur: { zh: '恐龍', tw: '恐龍', lo: 'khióng-liông' },
   unicorn:  { zh: '獨角獸', tw: '獨角獸', lo: 'to̍k-kak-siù' },
   robot:    { zh: '機器人', tw: '機器人', lo: 'ki-khì-lâng' },
+  tsunu:    { zh: '機器人叔叔', tw: '機器人阿叔', lo: 'ki-khì-lâng a-tsik' },
 
   /* NPC */
   reception_npc: { zh: '櫃台助理', tw: '櫃台助理', lo: 'kuī-tâi tsōo-lí' },

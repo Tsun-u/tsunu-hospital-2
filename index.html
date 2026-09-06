@@ -915,21 +915,21 @@
         ? randomItem(specialKinds)
         : specialKinds.length && Math.random() < CONFIG.SPECIAL_PATIENT_CHANCE ? randomItem(specialKinds) : 'human';
       let patientPool = eligiblePatients.filter(patient => patient.kind === kind);
-      if (kind === 'animal') {
+      if (kind === 'animal' || kind === 'human') {
         const regularPool = patientPool.filter(patient => !patient.egg);
         const eggPool = patientPool.filter(patient => patient.egg);
-        const allRegularAnimalsUnlocked = PATIENTS.filter(patient => patient.kind === 'animal' && !patient.egg).every(patient => patient.unlockDay <= state.day);
-        const useEgg = !regularPool.length || allRegularAnimalsUnlocked && eggPool.length > 0 && Math.random() < CONFIG.EASTER_EGG_CHANCE;
+        const allRegularUnlocked = PATIENTS.filter(patient => patient.kind === kind && !patient.egg).every(patient => patient.unlockDay <= state.day);
+        const useEgg = !regularPool.length || (kind === 'human' || allRegularUnlocked) && eggPool.length > 0 && Math.random() < CONFIG.EASTER_EGG_CHANCE;
         patientPool = useEgg ? eggPool : regularPool;
       }
       const template = randomItem(patientPool);
       const depts = unlockedDeptIds();
-      const symptomPool = SYMPTOMS.filter(symptom => symptom.kind === kind && depts.has(symptom.dept));
-      const symptom = kind === 'human'
-        ? weightedItem(symptomPool, item => item.ageWeight?.[template.age] ?? 0)
-        : randomItem(symptomPool);
+      const symptomKinds = template.symptomKinds ?? [template.kind];
+      const symptomPool = SYMPTOMS.filter(symptom => symptomKinds.includes(symptom.kind) && depts.has(symptom.dept));
+      const symptom = weightedItem(symptomPool, item => item.kind === 'human' ? item.ageWeight?.[template.age] ?? 0 : 1);
       return {
         ...template,
+        kind: symptom.kind,   // 機器人叔叔抽到哪種病症，這次就算哪種病人
         instanceId: state.nextPatientId++,
         symptom,
         location: 'waiting',
