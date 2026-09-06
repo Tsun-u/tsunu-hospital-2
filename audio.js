@@ -8,7 +8,7 @@ const Music = (() => {
   const MASTER_VOLUME = 0.05;
   const LOOKAHEAD_SECONDS = 0.3;
   const TICK_MS = 100;
-  const DEFAULT_SEEDS = { open: 1, rest: 1 };
+  const DEFAULT_SEEDS = { open: 11, rest: 33 };   // 童童與女兒 2026-09-06 試聽定案
   /* 每首曲子的音量係數：四軌合起來的看診曲比單軌的休診曲響很多，壓到峰值比音效低 6 dB 以上。 */
   const SONG_LEVEL = { open: 0.3, rest: 0.75 };
 
