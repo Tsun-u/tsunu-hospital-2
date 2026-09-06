@@ -98,9 +98,15 @@ const Music = (() => {
     }
     return offsets;
   }
-  function makeMotif(random, bars) {
+  /* B 段的節奏：四分音符為骨架，最多再補一個弱拍，跟 A 段的八分音符動機拉開對比。 */
+  function motifRhythmB(random) {
+    const slots = [0, 2, 4, 6];
+    if (random() < 0.6) slots.push(pick(random, [1, 3, 5, 7]));
+    return slots.sort((a, b) => a - b);
+  }
+  function makeMotif(random, bars, rhythm = motifRhythm) {
     return Array.from({ length: bars }, () => {
-      const slots = motifRhythm(random);
+      const slots = rhythm(random);
       return { slots, offsets: motifContour(random, slots.length) };
     });
   }
@@ -134,24 +140,26 @@ const Music = (() => {
 
   /* ---------- 看診曲：BPM 132，16 小節 A / A' / B / サビ ---------- */
 
+  /* 四段各有自己的動機、貝斯型與鼓型：A 段輕、A' 段加密 hat、B 段換動機與四つ打ち、サビ 動機拉高回歸。 */
   const OPEN_SECTIONS = [
-    { name: 'A', chords: ['C', 'G', 'Am', 'F'], low: 72, high: 86, lift: 0 },
-    { name: "A'", chords: ['C', 'G', 'Am', 'F'], low: 72, high: 86, lift: 0 },
-    { name: 'B', chords: ['C', 'G', 'Am', 'F'], low: 74, high: 86, lift: 2 },
-    { name: 'chorus', chords: ['C', 'F', 'G', 'C'], low: 76, high: 88, lift: 4 },
+    { name: 'A', chords: ['C', 'G', 'Am', 'F'], low: 72, high: 86, lift: 0, motif: 'a', bass: 'bounce', hats: 'beats', kick: 'backbeat' },
+    { name: "A'", chords: ['C', 'G', 'Am', 'F'], low: 72, high: 86, lift: 0, motif: 'a', bass: 'bounce', hats: 'eighths', kick: 'backbeat' },
+    { name: 'B', chords: ['Am', 'F', 'C', 'G'], low: 74, high: 86, lift: 1, motif: 'b', bass: 'walk', hats: 'eighths', kick: 'four' },
+    { name: 'chorus', chords: ['C', 'F', 'G', 'C'], low: 76, high: 88, lift: 4, motif: 'a', bass: 'bounce', hats: 'eighths', kick: 'backbeat' },
   ];
+  const FILL_BARS = [7, 11];
   const OPEN_TOP_NOTE = 88;
 
   function composeOpen(seed) {
     const random = mulberry32(seed * 7919 + 17);
-    const motif = makeMotif(random, 2);
+    const motifs = { a: makeMotif(random, 2), b: makeMotif(random, 2, motifRhythmB) };
     const lead = [];
     const harmony = [];
     let anchorMidi = 79;
     OPEN_SECTIONS.forEach((section, sectionIndex) => {
       section.chords.forEach((chord, barInSection) => {
         const bar = sectionIndex * 4 + barInSection;
-        const motifBar = motif[barInSection % 2];
+        const motifBar = motifs[section.motif][barInSection % 2];
         const lifted = { slots: motifBar.slots, offsets: motifBar.offsets.map(offset => offset + section.lift) };
         const center = (section.low + section.high) / 2;
         let notes = realizeBar(lifted, chord, { low: section.low, high: section.high, anchorMidi: (anchorMidi + center) / 2 });
@@ -172,20 +180,22 @@ const Music = (() => {
       section.chords.forEach((chord, barInSection) => {
         const bar = sectionIndex * 4 + barInSection;
         const root = 36 + chordRoot(chord);
+        const walk = [root, root + 7, root + 12, root + 7];
+        const fill = FILL_BARS.includes(bar);
         for (let beat = 0; beat < 4; beat += 1) {
-          bass.push({ bar, beat, midi: root, beats: 0.5 });
-          bass.push({ bar, beat: beat + 0.5, midi: root + 12, beats: 0.5 });
-          drums.push({ bar, beat, kind: beat % 2 === 0 ? 'kick' : 'snare' });
+          if (section.bass === 'walk') bass.push({ bar, beat, midi: walk[beat], beats: 1 });
+          else {
+            bass.push({ bar, beat, midi: root, beats: 0.5 });
+            bass.push({ bar, beat: beat + 0.5, midi: root + 12, beats: 0.5 });
+          }
+          if (section.kick === 'four' || beat % 2 === 0) drums.push({ bar, beat, kind: 'kick' });
+          if (beat % 2 === 1 && !(fill && beat === 3)) drums.push({ bar, beat, kind: 'snare' });
           drums.push({ bar, beat, kind: 'hat' });
-          drums.push({ bar, beat: beat + 0.5, kind: 'hat' });
+          if (section.hats === 'eighths') drums.push({ bar, beat: beat + 0.5, kind: 'hat' });
         }
+        if (fill) [0, 0.25, 0.5, 0.75].forEach(offset => drums.push({ bar, beat: 3 + offset, kind: 'snare' }));   // 段落交界的 snare 連打
       });
     });
-    const rollBar = 11;
-    for (let index = drums.length - 1; index >= 0; index -= 1) {
-      if (drums[index].bar === rollBar && drums[index].beat === 3 && drums[index].kind === 'snare') drums.splice(index, 1);
-    }
-    [0, 0.25, 0.5, 0.75].forEach(offset => drums.push({ bar: rollBar, beat: 3 + offset, kind: 'snare' }));
     return { kind: 'open', bpm: 132, bars: 16, breathBeats: 0, chords: OPEN_SECTIONS.flatMap(section => section.chords), lead, harmony, bass, drums, pad: [] };
   }
   /* A' 段的變形：最後兩個音一個往下一級、一個往上一級，強拍仍吸附和弦音。 */
