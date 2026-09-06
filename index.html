@@ -1298,7 +1298,7 @@
     function startPatientDrag(event) {
       if (activeDrag || !state.hospitalOpen) return;
       const patient = findPatient(event.currentTarget.dataset.patient);
-      if (!patient || patient.processing || patient.location === 'home') return;
+      if (!patient || patient.processing || patient.location === 'home' || patient.steps[3]) return;   // 治好的病人正要回家，不能再拖
       event.preventDefault();
       sfx.pick();
       const source = event.currentTarget;
@@ -1339,6 +1339,10 @@
       const x = Number.isFinite(event.clientX) ? event.clientX : drag.x;
       const y = Number.isFinite(event.clientY) ? event.clientY : drag.y;
       activeDrag = null;
+      if (drag.patient.location === 'home' || drag.patient.steps[3]) {   // 拖的途中病人已經治好回家：只收影子
+        drag.ghost.remove();
+        return;
+      }
       const moved = Math.hypot(x - drag.pointerStartX, y - drag.pointerStartY);
       if (moved < 12 && drag.patient.crying) {
         drag.ghost.remove();
