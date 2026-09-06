@@ -482,7 +482,23 @@
       animation: galleryOpen .32s cubic-bezier(.175,.885,.32,1.15);
     }
     @keyframes galleryOpen { from { opacity: 0; transform: translateY(18px) scale(.94); } }
-    .gallery-head { min-height: 64px; display: flex; align-items: center; gap: 10px; }
+    .gallery-head { min-height: 60px; display: flex; align-items: center; gap: 10px; }
+    .gallery-tabs { display: flex; gap: 10px; margin: 2px 0 10px; }
+    .gallery-tab {
+      min-width: 118px;
+      min-height: 46px;
+      padding: 3px 18px;
+      border: 4px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 4px 0 #c9a37c;
+      font-size: 19px;
+      font-weight: 950;
+      line-height: 1.05;
+      cursor: pointer;
+    }
+    .gallery-tab .lo { font-size: 11px; }
+    .gallery-tab[aria-pressed="true"] { background: #ffe089; box-shadow: 0 2px 0 #c9a37c; transform: translateY(2px); }
     .gallery-head img { width: 42px; height: 42px; object-fit: contain; }
     .gallery-head h2 { margin: 0; font-size: 29px; line-height: 1; }
     .gallery-close {
@@ -500,6 +516,8 @@
     }
     .gallery-close:active { transform: translateY(3px); box-shadow: 0 1px 0 #c9a37c; }
     .gallery-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 7px; }
+    .gallery-grid.doctors { grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
+    .gallery-grid.symptoms { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
     .gallery-card {
       position: relative;
       min-width: 0;
@@ -507,18 +525,34 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-end;
-      padding: 5px 4px 7px;
+      padding: 4px 4px 5px;
       overflow: hidden;
       border: 3px solid #dec49e;
       border-radius: 15px;
       background: #fff;
       text-align: center;
     }
-    .gallery-card-art { width: 82px; height: 120px; min-height: 84px; object-fit: contain; flex: 0 1 auto; }   /* 名字太長時讓立繪讓位 */
+    .gallery-card-art { width: 82px; height: 120px; min-height: 70px; object-fit: contain; flex: 0 1 auto; }   /* 名字太長時讓立繪讓位 */
     .gallery-card.unmet .gallery-card-art { filter: brightness(0); opacity: .4; }
     .gallery-card-name { min-height: 44px; display: grid; place-items: center; font-size: 13px; font-weight: 950; line-height: 1.08; }
-    .gallery-card-name .lo { font-size: 12px; }
+    .gallery-card-name .lo { font-size: 11px; }
     .gallery-card-count { position: absolute; top: 6px; right: 6px; min-width: 26px; height: 26px; padding: 0 7px; display: grid; place-items: center; border-radius: 13px; background: #e8637a; color: #fff; font-size: 14px; font-weight: 950; box-shadow: 0 2px 0 #b6404f; }
+    .gallery-card.doctor { justify-content: center; gap: 6px; }
+    .gallery-card.doctor .gallery-card-art { width: 100%; height: 190px; min-height: 120px; object-fit: cover; }   /* NPC 立繪四周留白多，用 cover 把人物放大到卡片寬 */
+    .gallery-card-badge { width: 46px; height: 46px; object-fit: contain; flex: none; margin-top: 4px; }
+    .gallery-card-dept { font-size: 13px; font-weight: 850; color: #7b5d47; line-height: 1.1; }
+    .gallery-card-dept .lo { font-size: 11px; }
+    .gallery-card.locked::after { content: "🔒"; position: absolute; right: 8px; top: 8px; font-size: 28px; opacity: .8; }
+    .gallery-card.symptom { justify-content: flex-start; gap: 5px; padding: 8px; }
+    .symptom-head { display: flex; align-items: center; gap: 6px; width: 100%; padding-right: 26px; }
+    .symptom-head img { width: 46px; height: 46px; object-fit: contain; flex: none; }
+    .symptom-head .gallery-card-name { flex: 1; min-height: 0; text-align: left; place-items: center start; }
+    .symptom-chain { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px 2px; }
+    .symptom-chain .chain-group { display: flex; gap: 2px; }
+    .symptom-chain img { width: 26px; height: 26px; object-fit: contain; }
+    .symptom-chain .arrow { font-size: 16px; font-weight: 950; color: #a07a55; padding: 0 2px; line-height: 1; }
+    .gallery-card.symptom.egg-mystery { justify-content: center; }
+    .gallery-card.symptom.egg-mystery .gallery-question { font-size: 44px; }
     .gallery-card.egg-mystery { justify-content: center; background: #8a65a8; border-color: #654080; color: #fff; }
     .gallery-card.egg-mystery .gallery-question { font-size: 72px; font-weight: 950; line-height: 1; text-shadow: 0 5px 0 rgba(53,24,72,.25); }
     .gallery-card.egg-mystery .gallery-card-name { min-height: 24px; font-size: 12px; color: #f8eaff; }
@@ -668,7 +702,12 @@
           <h2 id="galleryTitle"></h2>
           <button id="galleryCloseBtn" class="gallery-close" type="button">×</button>
         </header>
-        <div id="galleryGrid" class="gallery-grid"></div>
+        <nav id="galleryTabs" class="gallery-tabs">
+          <button class="gallery-tab" type="button" data-tab="patients" aria-pressed="true"></button>
+          <button class="gallery-tab" type="button" data-tab="doctors" aria-pressed="false"></button>
+          <button class="gallery-tab" type="button" data-tab="symptoms" aria-pressed="false"></button>
+        </nav>
+        <div id="galleryGrid" class="gallery-grid patients"></div>
       </div>
     </section>
     <section id="unlockShow" class="unlock-show" hidden>
@@ -702,6 +741,7 @@
       sound: true,
       music: true,
       met: {},
+      cured: {},
       lastCloseAt: 0,
       dayDone: false,
       patients: [],
@@ -725,6 +765,7 @@
         state.day = Math.max(1, Math.floor(Number(parsed.day) || 1));
         state.hearts = Math.max(0, Math.floor(Number(parsed.hearts) || 0));
         state.met = parsed.met && typeof parsed.met === 'object' && !Array.isArray(parsed.met) ? parsed.met : {};
+        state.cured = parsed.cured && typeof parsed.cured === 'object' && !Array.isArray(parsed.cured) ? parsed.cured : {};
         state.lang = parsed.lang === 'tw' ? 'tw' : 'zh';
         state.sound = typeof parsed.sound === 'boolean' ? parsed.sound : true;
         state.music = typeof parsed.music === 'boolean' ? parsed.music : true;
@@ -740,6 +781,7 @@
         day: state.day,
         hearts: state.hearts,
         met: state.met,
+        cured: state.cured,
         lang: state.lang,
         sound: state.sound,
         music: state.music,
@@ -1113,8 +1155,52 @@
       useCorrectTool(patient, group, tool);
     }
 
+    let galleryTab = 'patients';
     function renderGallery() {
-      $('galleryGrid').innerHTML = PATIENTS.map(patient => {
+      const grid = $('galleryGrid');
+      grid.className = `gallery-grid ${galleryTab}`;
+      grid.innerHTML = galleryTab === 'doctors' ? renderDoctorCards() : galleryTab === 'symptoms' ? renderSymptomCards() : renderPatientCards();
+      document.querySelectorAll('.gallery-tab').forEach(tab => tab.setAttribute('aria-pressed', String(tab.dataset.tab === galleryTab)));
+    }
+    function renderDoctorCards() {
+      const unlocked = unlockedDeptIds();
+      return DEPTS.map(dept => {
+        const open = unlocked.has(dept.id);
+        return `<article class="gallery-card doctor${open ? '' : ' unmet locked'}" aria-label="${textPlain(open ? dept.npc : 'lockedDoctor')}">
+          <img class="gallery-card-art" src="${npcPath(dept.npc, open ? 'wave' : 'idle')}" alt="" draggable="false">
+          <img class="gallery-card-badge" src="${iconPath('dept', dept.id)}" alt="" draggable="false">
+          <span class="gallery-card-name">${text(open ? dept.npc : 'lockedDoctor')}</span>
+          <span class="gallery-card-dept">${text(dept.id)}</span>
+        </article>`;
+      }).join('');
+    }
+    /* 病症卡：症狀 → 檢查工具 › 科別 › 治療步驟 › 處方藥，治好過才點亮。 */
+    function renderSymptomCards() {
+      const icon = (group, id) => `<img src="${iconPath(group, id)}" alt="${textPlain(id)}" title="${textPlain(id)}" draggable="false">`;
+      const chainGroup = items => `<span class="chain-group">${items.join('')}</span>`;
+      return SYMPTOMS.map(symptom => {
+        const count = Math.max(0, Number(state.cured[symptom.id]) || 0);
+        if (!count) {
+          return `<article class="gallery-card symptom egg-mystery" aria-label="${textPlain('mysterySymptom')}">
+            <span class="gallery-question" aria-hidden="true">?</span>
+            <span class="gallery-card-name">${text('mysterySymptom')}</span>
+          </article>`;
+        }
+        const chain = [
+          chainGroup([icon('check', symptom.check)]),
+          chainGroup([icon('dept', symptom.dept)]),
+          chainGroup(symptom.treat.map(step => icon('treat', step))),
+          chainGroup(symptom.meds.map(med => icon('med', med))),
+        ].join('<span class="arrow" aria-hidden="true">›</span>');
+        return `<article class="gallery-card symptom" aria-label="${textPlain(symptom.id)}">
+          <span class="symptom-head"><img src="${iconPath('symptom', symptom.id)}" alt="" draggable="false"><span class="gallery-card-name">${text(symptom.id)}</span></span>
+          <span class="symptom-chain">${chain}</span>
+          <span class="gallery-card-count" aria-label="${textPlain('curedCount', { n: count })}">${count}</span>
+        </article>`;
+      }).join('');
+    }
+    function renderPatientCards() {
+      return PATIENTS.map(patient => {
         const count = Math.max(0, Number(state.met[patient.id]) || 0);
         if (!count && patient.egg) {
           return `<article class="gallery-card egg-mystery" aria-label="${textPlain('mysteryPatient')}">
@@ -1170,6 +1256,7 @@
       });
       $('langBtn').querySelector('small').innerHTML = text(state.lang === 'tw' ? 'languageTw' : 'languageZh');
       $('galleryTitle').innerHTML = text('gallery');
+      document.querySelectorAll('.gallery-tab').forEach(tab => { tab.innerHTML = text({ patients: 'tabPatients', doctors: 'tabDoctors', symptoms: 'tabSymptoms' }[tab.dataset.tab]); });
       $('galleryCloseBtn').setAttribute('aria-label', textPlain('galleryClose'));
       $('summaryTitle').innerHTML = text('dayDone');
       $('summaryHuman').innerHTML = text('treatedHuman', { n: state.treated.human });
@@ -1487,6 +1574,7 @@
       await sleep(820);
       patient.location = 'home';
       patient.processing = '';
+      state.cured[patient.symptom.id] = (Number(state.cured[patient.symptom.id]) || 0) + 1;
       state.hearts += 1;
       state.treated[patient.kind] += 1;
       $('heartCount').textContent = state.hearts;
@@ -1693,6 +1781,7 @@
     $('restDoor').addEventListener('click', openNextDay);
     $('galleryBtn').addEventListener('click', openGallery);
     $('restGalleryBtn').addEventListener('click', openGallery);
+    document.querySelectorAll('.gallery-tab').forEach(tab => tab.addEventListener('click', () => { galleryTab = tab.dataset.tab; sfx.pop(); renderGallery(); }));
     $('galleryCloseBtn').addEventListener('click', closeGallery);
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && !$('galleryOverlay').hidden) closeGallery();
