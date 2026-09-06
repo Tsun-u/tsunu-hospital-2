@@ -329,7 +329,7 @@ const Music = (() => {
         noise(bus, when, 'bandpass', 1800, 0.28, 0.12);
         oscillator(bus, 180, 'sine', when, 0.2, 0.002, 0.01, 0.06);
       },
-      hat: (bus, ev, when) => noise(bus, when, 'highpass', 7000, 0.09, 0.035),
+      hat: (bus, ev, when) => noise(bus, when, 'highpass', 7000, 0.05, 0.035),
       pluck: (bus, ev, when) => pluck(bus, midiToFreq(ev.midi), when, 0.42, 2.6),
       pluckSoft: (bus, ev, when) => pluck(bus, midiToFreq(ev.midi), when, 0.2, 2.2),
       pad: (bus, ev, when) => ev.midis.forEach(midi => oscillator(bus, midiToFreq(midi), 'triangle', when, 0.055, 0.7, Math.max(0.1, ev.len - 0.7), 1.4)),
@@ -375,7 +375,8 @@ const Music = (() => {
   function tick() {
     if (!current || !enabled || ctx.state !== 'running') return;
     const horizon = ctx.currentTime + LOOKAHEAD_SECONDS;
-    if (current.loopStart < ctx.currentTime - 1) {            // 分頁被凍結太久：從現在重新起算
+    const nextEventTime = current.loopStart + current.events[current.index].t;
+    if (nextEventTime < ctx.currentTime - 1) {                // 分頁被凍結太久、排程落後超過一秒：從現在重新起算
       current.loopStart = ctx.currentTime + 0.05;
       current.index = 0;
     }
