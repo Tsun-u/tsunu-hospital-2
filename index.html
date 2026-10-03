@@ -1818,5 +1818,16 @@
     if (state.dayDone) showRestScreen();
     else prepareDay(!hadSave);
   </script>
+  <script src="savebox.js"></script>
+  <script>
+    SaveBox.init({
+      game: 'tsunu-hospital-2',
+      keys: ['hospital2Save'],
+      clientId: '674654433726-tq25dneafbu0pm39pq6kl2kpdmgmnh3f.apps.googleusercontent.com',
+    });
+    const saveBtn = SaveBox.button('font-size:24px;');
+    saveBtn.className = 'top-btn';
+    document.getElementById('langBtn').after(saveBtn);
+  </script>
 </body>
 </html>
