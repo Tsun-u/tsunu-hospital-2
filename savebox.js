@@ -18,15 +18,34 @@ const SaveBox = {};
     return { game: cfg.game, savedAt: new Date().toISOString(), data };
   }
 
-  /* 寫回存檔；不是本遊戲的檔案回傳 false */
+  const isBackup = payload => !!payload && payload.game === cfg.game && !!payload.data && typeof payload.data === 'object';
+
+  /* 寫回存檔。備份裡沒有的 key 不動，有進度之前做的備份才不會清掉目前的進度 */
   function restore(payload) {
-    if (!payload || payload.game !== cfg.game || typeof payload.data !== 'object') return false;
     for (const k of cfg.keys) {
       const v = payload.data[k];
       if (typeof v === 'string') localStorage.setItem(k, v);
-      else localStorage.removeItem(k);
     }
-    return true;
+  }
+
+  /* 還原會改掉現有資料時先問，附上備份時間讓玩家看得出新舊 */
+  function overwriteAllowed(payload) {
+    const changes = cfg.keys.some(k => {
+      const v = payload.data[k], now = localStorage.getItem(k);
+      return typeof v === 'string' && now !== null && now !== v;
+    });
+    if (!changes) return true;
+    const at = new Date(payload.savedAt);
+    const when = isNaN(at) ? '' : `這份備份是 ${at.toLocaleString('zh-TW', { dateStyle: 'short', timeStyle: 'short' })} 做的。\n`;
+    return confirm(`${when}還原後會蓋掉目前的存檔，確定要還原嗎？`);
+  }
+
+  /* 不是本遊戲的檔案顯示 ❌；玩家取消就回到原本的圖示 */
+  function applyBackup(btn, payload) {
+    if (!isBackup(payload)) return flash(btn, '❌');
+    if (!overwriteAllowed(payload)) { btn.textContent = btn.dataset.label; return; }
+    restore(payload);
+    flash(btn, '✅', true);
   }
 
   function exportFile() {
@@ -49,9 +68,9 @@ const SaveBox = {};
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
-        let ok = false;
-        try { ok = restore(JSON.parse(reader.result)); } catch (e) {}
-        flash(btn, ok ? '✅' : '❌', ok);
+        let payload = null;
+        try { payload = JSON.parse(reader.result); } catch (e) {}
+        applyBackup(btn, payload);
       };
       reader.readAsText(file);
     };
@@ -147,7 +166,7 @@ const SaveBox = {};
     auth(ok => {
       if (!ok) { btn.textContent = label; return; }
       download()
-        .then(payload => payload ? flash(btn, restore(payload) ? '✅' : '❌', true) : flash(btn, '➖'))
+        .then(payload => payload ? applyBackup(btn, payload) : flash(btn, '➖'))
         .catch(() => flash(btn, '❌'));
     });
   }
